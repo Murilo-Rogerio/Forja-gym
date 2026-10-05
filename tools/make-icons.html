@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><title>FORJA — Gerador de ícones PWA</title>
+<style>body{background:#0a0f1d;color:#e8eef8;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;gap:18px;padding:40px}
+button{background:#38bdf8;border:none;color:#04121f;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer}</style>
+</head>
+<body>
+<h1>Gere os PNGs do ícone</h1>
+<p style="color:#8494ab">Baixe os dois arquivos e salve em <b>icons/</b> como icon-192.png e icon-512.png.</p>
+<div style="display:flex;gap:24px">
+  <div style="text-align:center"><canvas id="c192" width="192" height="192" style="border-radius:24px"></canvas><br><button onclick="dl('c192','icon-192.png')">Baixar 192px</button></div>
+  <div style="text-align:center"><canvas id="c512" width="512" height="512" style="width:128px;border-radius:24px"></canvas><br><button onclick="dl('c512','icon-512.png')">Baixar 512px</button></div>
+</div>
+<script>
+function draw(c){
+  const s = c.width, x = c.getContext('2d'), r = s*.22;
+  x.beginPath(); x.moveTo(r,0); x.arcTo(s,0,s,s,r); x.arcTo(s,s,0,s,r); x.arcTo(0,s,0,0,r); x.arcTo(0,0,s,0,r);
+  x.closePath(); x.fillStyle = '#0f172a'; x.fill();
+  x.strokeStyle = 'rgba(56,189,248,.5)'; x.lineWidth = s*.012; x.stroke();
+  const cx = s/2, cy = s/2, u = s/512;
+  x.fillStyle = '#e8eef8'; x.fillRect(cx-106*u, cy-9*u, 212*u, 18*u);
+  x.fillStyle = '#38bdf8';
+  [[-82,-30,16,60],[66,-30,16,60],[-56,-58,22,116],[34,-58,22,116],[-96,-82,26,164],[70,-82,26,164],[-134,-104,30,208],[104,-104,30,208]]
+    .forEach(p => x.fillRect(cx+p[0]*u, cy+p[1]*u, p[2]*u, p[3]*u));
+}
+function dl(id, name){
+  const c = document.getElementById(id);
+  c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = name; a.click();
+  }, 'image/png');
+}
+draw(document.getElementById('c192'));
+draw(document.getElementById('c512'));
+</script>
+</body>
+</html>

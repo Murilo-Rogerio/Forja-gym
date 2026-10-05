@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>FORJA — Treino & Performance</title>
+<meta name="description" content="Treinos, cargas, PRs, feed social e IA. Funciona offline na academia.">
+<meta name="theme-color" content="#0a0f1d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FORJA">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<noscript><div style="padding:40px 20px;color:#e8eef8;font-family:sans-serif;text-align:center">O FORJA precisa de JavaScript habilitado para funcionar.</div></noscript>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div id="app">
+  <div id="views">
+    <section class="view" data-view="home"></section>
+    <section class="view" data-view="workouts"></section>
+    <section class="view" data-view="feed"></section>
+    <section class="view" data-view="progress"></section>
+    <section class="view" data-view="nutrition"></section>
+    <section class="view" data-view="profile"></section>
+  </div>
+  <nav id="tabbar">
+    <button class="tab ripple" data-act="nav" data-arg="home" aria-label="Início"></button>
+    <button class="tab ripple" data-act="nav" data-arg="workouts" aria-label="Treinos"></button>
+    <button class="tab ripple" data-act="nav" data-arg="feed" aria-label="Feed"></button>
+    <button class="tab ripple" data-act="nav" data-arg="progress" aria-label="Progresso"></button>
+    <button class="tab ripple" data-act="nav" data-arg="nutrition" aria-label="Nutrição"></button>
+    <button class="tab ripple" data-act="nav" data-arg="profile" aria-label="Perfil"></button>
+  </nav>
+  <div id="stack"></div>
+  <div id="restfull"></div>
+  <div id="restpill"></div>
+  <button id="trainpill" data-act="ac-restore"></button>
+  <div id="toastlayer"></div>
+  <div id="modallayer"></div>
+  <canvas id="fx"></canvas>
+</div>
+
+<!-- ordem de carregamento = ordem de dependência (escopo global compartilhado) -->
+<script src="js/lib/utils.js"></script>
+<script src="js/lib/data.js"></script>
+<script src="js/components/icons.js"></script>
+<script src="js/lib/state.js"></script>
+<script src="js/app/router.js"></script>
+<script src="js/lib/gamification.js"></script>
+<script src="js/components/fx.js"></script>
+<script src="js/components/toast.js"></script>
+<script src="js/components/timer.js"></script>
+<script src="js/components/charts.js"></script>
+<script src="js/components/bodymap.js"></script>
+<script src="js/lib/ai.js"></script>
+<script src="js/features/auth.js"></script>
+<script src="js/features/editor.js"></script>
+<script src="js/features/coach.js"></script>
+<script src="js/features/workout.js"></script>
+<script src="js/features/share.js"></script>
+<script src="js/features/feed.js"></script>
+<script src="js/views/home.js"></script>
+<script src="js/views/workouts.js"></script>
+<script src="js/views/feed.js"></script>
+<script src="js/views/progress.js"></script>
+<script src="js/views/nutrition.js"></script>
+<script src="js/views/profile.js"></script>
+<script src="js/app/wiring.js"></script>
+<script src="js/app/boot.js"></script>
+</body>
+</html>

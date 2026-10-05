@@ -1,0 +1,6 @@
+:root{
+  --bg:#0a0f1d; --surf:#0f172a; --line:rgba(148,163,184,.13); --line2:rgba(148,163,184,.22);
+  --acc:#38bdf8; --acc2:#2563eb; --acc-deep:#0c2a4a; --txt:#e8eef8; --mut:#8494ab; --dim:#5a6a83;
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --hot:#ef4444;
+  --fd:'Barlow Condensed',sans-serif; --fb:'Barlow',sans-serif; --tab-h:60px; --r:16px;
+}
