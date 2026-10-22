@@ -8,7 +8,14 @@ const ACTIONS = {
   'auth-google': function(){ googleLogin(); },
   'google-instant-login': function(){ processInstantGoogleLogin(); },
   'auth-guest': function(){ setSession({ mode:'guest' }); enterApp(); },
-  'auth-eye': function(){ const p = document.getElementById('au-pass'); if(p) p.type = p.type === 'password' ? 'text' : 'password'; },
+  'auth-eye': function(d, el){
+    const p = document.getElementById('au-pass');
+    if(p){
+      const isPass = p.type === 'password';
+      p.type = isPass ? 'text' : 'password';
+      if(el) el.innerHTML = icon(isPass ? 'eyeOff' : 'eye');
+    }
+  },
 
   'ob-save': function(){ saveOnboarding(); },
 

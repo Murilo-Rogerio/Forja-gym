@@ -22,7 +22,7 @@ function renderAuth(){
       '<div style="position:relative">' +
       '<input class="fld" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password" style="padding-right:46px">' +
       '<button class="iconbtn ripple" style="position:absolute;right:4px;top:4px;width:38px;height:38px;border:none" data-act="auth-eye" aria-label="Mostrar senha">' +
-      icon('search') + '</button></div>' +
+      icon('eye') + '</button></div>' +
       '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="auth-submit">' + icon('lock') + ' Entrar na Forja</button>' +
       '<button class="gbtn ripple mt14" data-act="auth-google"><span class="gmark">G</span> Continuar com Google</button>' +
       '<div class="rowline mt20">' +

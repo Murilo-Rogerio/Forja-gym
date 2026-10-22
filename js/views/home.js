@@ -20,15 +20,16 @@ RENDER.home = function(){
       '<div class="rowline"><div><div class="lbl" style="color:var(--acc)">Treino sugerido para hoje</div>' +
       '<div class="h-display h2 mt8">' + esc(w.name) + '</div>' +
       '<div class="mut mt8" style="font-size:13px">' + w.ex.length + ' exercícios · ' +
-      w.ex.reduce(function(s,e){ return s + e.sets.length; },0) + ' séries (cargas em branco)</div></div>' +
+      w.ex.reduce(function(s,e){ return s + e.sets.length; },0) + ' séries</div></div>' +
       '<div style="width:54px;height:54px;border-radius:16px;background:var(--acc);color:#04121f;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(56,189,248,.4)">' +
       icon('play') + '</div></div></div>';
   } else {
-    heroCard = '<div class="card mt14 rise" style="text-align:center;padding:28px 18px">' +
+    heroCard = '<div class="card mt14 rise" style="text-align:center;padding:26px 18px">' +
       '<b style="font-size:17px;font-family:var(--fd);letter-spacing:.5px;text-transform:uppercase">Nenhuma ficha ativa ainda</b>' +
-      '<p class="mut mt8" style="font-size:13px;line-height:1.5">Crie sua própria ficha ou deixe a IA gerar uma rotina sob medida para seu objetivo.</p>' +
-      '<div class="rowline mt14" style="justify-content:center;gap:8px">' +
-      '<button class="btn btn-pri ripple" data-act="w-new">' + icon('plus') + ' Criar Ficha</button>' +
+      '<p class="mut mt8" style="font-size:13px;line-height:1.5">Comece criando sua própria ficha, use a IA para montar um treino personalizado ou escolha um modelo pronto (PPL, Upper/Lower, ABC...).</p>' +
+      '<div class="rowline mt14" style="justify-content:center;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-pri ripple" data-act="w-new">' + icon('plus') + ' Criar Treino</button>' +
+      '<button class="btn btn-ghost ripple" data-act="nav" data-arg="workouts">' + icon('bolt2') + ' Ver Modelos Prontos</button>' +
       '<button class="btn btn-ai ripple" data-act="ai-open">' + icon('wand') + ' Gerar com IA</button>' +
       '</div></div>';
   }
