@@ -3,7 +3,7 @@ let state = null, session = null, FB = null, active = null;
 
 function defaultState(){
   return {
-    v: 4,
+    v: 5,
     user: { name:'', sex:'m', age:'', weight:'', height:'', activity:'moderado', goal:'manter', xp:0, avatar:'', createdAt:Date.now() },
     workouts: [],
     library: LIB.map(function(l){ return Object.assign({}, l); }),
@@ -76,6 +76,21 @@ function migrateState(s){
       s.demo = false;
     }
     s.v = 4;
+  }
+
+  // Versão 5: merge de novos exercícios pré-cadastrados comuns (90+ exercícios com equipamento e descrição)
+  if(s.v < 5){
+    s.library = s.library || [];
+    LIB.forEach(function(libEx){
+      const existing = s.library.find(function(e){ return e.id === libEx.id; });
+      if(!existing){
+        s.library.push(Object.assign({}, libEx));
+      } else {
+        if(!existing.desc && libEx.desc) existing.desc = libEx.desc;
+        if(!existing.equip && libEx.equip) existing.equip = libEx.equip;
+      }
+    });
+    s.v = 5;
   }
 
   s.settings = Object.assign({ sound:true, vibrate:true, gemini:'', strava:'', stravaAuto:false }, s.settings||{});

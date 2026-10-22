@@ -1,5 +1,6 @@
 let editing = null, editorEl = null, restCtx = null;
 let libFilter = 'Todos', libQuery = '', libSelect = false;
+let pendingCustomExImg = '';
 
 function libChipsHTML(){
   const groups = ['Todos','Peito','Costas','Pernas','Ombros','Braços','Core'];
@@ -13,23 +14,38 @@ function libChipsHTML(){
 function libListHTML(){
   const q = libQuery.toLowerCase().trim();
   const list = state.library.filter(function(e){
-    return (libFilter === 'Todos' || e.group === libFilter) && (normTxt(e.name).includes(normTxt(q)));
+    const matchG = (libFilter === 'Todos' || e.group === libFilter);
+    const matchQ = !q || normTxt(e.name).includes(normTxt(q)) || normTxt(e.equip || '').includes(normTxt(q));
+    return matchG && matchQ;
   });
 
   if(!list.length){
     return '<div class="empty">' +
-      '<p>Nenhum exercício encontrado com esse nome.</p>' +
+      '<p>Nenhum exercício encontrado para essa busca.</p>' +
       '<button class="btn btn-pri btn-sm ripple mt14" data-act="lib-new">' + icon('plus') + ' Criar exercício personalizado agora</button>' +
       '</div>';
   }
 
   return list.map(function(e){
-    return '<div class="wrow" style="padding:12px 14px"><div style="flex:1">' +
-      '<b style="font-size:15px">' + esc(e.name) + '</b>' +
-      '<div class="lbl mt8" style="color:var(--dim)">' + esc(e.group) + (e.custom ? ' · <span style="color:var(--acc)">personalizado</span>' : '') + '</div></div>' +
+    // Foto do exercício ou ícone estilizado
+    let thumb = '';
+    if(e.img){
+      thumb = '<img src="' + esc(e.img) + '" class="ex-thumb" alt="' + esc(e.name) + '">';
+    } else {
+      thumb = '<div class="ex-thumb-icon">' + icon('bolt2') + '</div>';
+    }
+
+    return '<div class="wrow" style="padding:10px 14px;align-items:center;gap:12px">' +
+      thumb +
+      '<div style="flex:1;min-width:0;cursor:pointer" data-act="lib-view-ex" data-arg="' + e.id + '">' +
+      '<b style="font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.name) + '</b>' +
+      '<div class="lbl mt8" style="color:var(--dim);font-size:11.5px">' +
+      esc(e.group) + ' · ' + esc(e.equip || 'Livre') +
+      (e.custom ? ' · <span style="color:var(--acc);font-weight:600">Personalizado</span>' : '') +
+      '</div></div>' +
       (libSelect
-        ? '<button class="btn btn-pri btn-sm ripple" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Adicionar</button>'
-        : '<span class="chip" style="font-size:11px">' + icon('check') + ' Na Biblioteca</span>') +
+        ? '<button class="btn btn-pri btn-sm ripple" style="flex:none" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Usar</button>'
+        : '<button class="iconbtn ripple" style="flex:none" data-act="lib-view-ex" data-arg="' + e.id + '" aria-label="Detalhes">' + icon('fwd') + '</button>') +
       '</div>';
   }).join('');
 }
@@ -49,15 +65,173 @@ function browseLibrary(selectMode){
       right: '<button class="btn btn-pri btn-sm ripple" data-act="lib-new">' + icon('plus') + ' Criar</button>'
     }) +
     '<div class="screen-bd">' +
+    // Banner Criar Exercício Personalizado
     '<div class="card acc mb14" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:14px" data-act="lib-new">' +
-    '<div style="width:40px;height:40px;border-radius:12px;background:rgba(56,189,248,.15);color:var(--acc);display:flex;align-items:center;justify-content:center">' + icon('plus') + '</div>' +
-    '<div style="flex:1"><b style="font-size:14.5px;color:var(--acc)">Adicionar Exercício Personalizado</b><div class="dim" style="font-size:12px">Cadastre uma variação própria para seu treino</div></div>' +
+    '<div style="width:42px;height:42px;border-radius:12px;background:rgba(56,189,248,.15);color:var(--acc);display:flex;align-items:center;justify-content:center;flex:none">' + icon('plus') + '</div>' +
+    '<div style="flex:1"><b style="font-size:14.5px;color:var(--acc)">Cadastrar Exercício Próprio</b>' +
+    '<div class="dim" style="font-size:12px">Adicione com nome, grupo muscular, execução e foto</div></div>' +
     icon('fwd') + '</div>' +
+
     '<div style="position:relative"><span style="position:absolute;left:14px;top:13px;color:var(--dim);display:flex">' + icon('search') + '</span>' +
-    '<input class="fld" placeholder="Buscar por nome (ex: Supino, Puxada, Leg)..." value="" data-inp="lib-search" style="padding-left:44px"></div>' +
+    '<input class="fld" placeholder="Buscar por nome ou equipamento (ex: Supino, Halteres, Cabo)..." value="" data-inp="lib-search" style="padding-left:44px"></div>' +
     '<div class="rowline mt14" id="lib-chips" style="gap:6px;flex-wrap:wrap">' + libChipsHTML() + '</div>' +
     '<div class="mt20 stack" id="lib-list">' + libListHTML() + '</div></div>'
   );
+}
+
+/* Modal detalhado de visualização do exercício */
+function openExerciseDetail(exId){
+  const e = libById(exId);
+  if(!e) return;
+
+  let imgHTML = '';
+  if(e.img){
+    imgHTML = '<img src="' + esc(e.img) + '" class="ex-detail-img" alt="' + esc(e.name) + '">';
+  }
+
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    imgHTML +
+    '<div class="rowline">' +
+    '<div><span class="preset-tag">' + esc(e.group) + ' · ' + esc(e.equip || 'Livre') + '</span>' +
+    '<div class="h-display h2 mt8">' + esc(e.name) + '</div></div>' +
+    '</div>' +
+    (e.desc ? '<div class="card mt14"><div class="lbl">Instruções de Execução</div><p class="mut mt8" style="font-size:13.5px;line-height:1.55">' + esc(e.desc) + '</p></div>' : '') +
+    '<div class="mt20 stack" style="gap:10px">' +
+    (libSelect ? '<button class="btn btn-pri ripple" style="width:100%" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Adicionar à Ficha Atual</button>' : '') +
+    (e.custom ? '<button class="btn btn-danger ripple" style="width:100%" data-act="lib-del-custom" data-arg="' + e.id + '">' + icon('trash') + ' Excluir Exercício Personalizado</button>' : '') +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="modal-close">Fechar</button>' +
+    '</div>'
+  );
+}
+
+/* Modal de cadastro de exercício personalizado com foto e instruções */
+function openCustomExerciseModal(){
+  pendingCustomExImg = '';
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="rowline"><div class="h-display h2">NOVO EXERCÍCIO</div>' +
+    '<div style="color:var(--acc)">' + icon('bolt2') + '</div></div>' +
+    '<p class="mut mt8" style="font-size:13px;line-height:1.45">' +
+    'Crie seu próprio exercício com foto, instruções de execução e grupo muscular. Ele ficará salvo na sua biblioteca permanente.</p>' +
+
+    '<label class="flabel lbl mt14">Nome do Exercício *</label>' +
+    '<input class="fld mt8" id="cex-name" placeholder="Ex.: Agachamento Búlgaro com Halteres" maxlength="50">' +
+
+    '<div class="split2 mt14">' +
+    '<div><label class="flabel lbl">Grupo Muscular</label>' +
+    '<select class="fld mt8" id="cex-group">' +
+    ['Peito','Costas','Pernas','Ombros','Braços','Core'].map(function(g){ return '<option value="' + g + '">' + g + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div><label class="flabel lbl">Equipamento</label>' +
+    '<select class="fld mt8" id="cex-equip">' +
+    ['Halteres','Barra','Máquina','Cabo','Peso Corporal','Kettlebell','Outro'].map(function(eq){ return '<option value="' + eq + '">' + eq + '</option>'; }).join('') +
+    '</select></div>' +
+    '</div>' +
+
+    '<label class="flabel lbl mt14">Instruções / Como Executar (Opcional)</label>' +
+    '<textarea class="fld mt8" id="cex-desc" placeholder="Ex.: Mantenha a coluna ereta, desça controlando o movimento até 90 graus e contraia no topo..." style="min-height:75px"></textarea>' +
+
+    '<label class="flabel lbl mt14">Foto ou Ilustração do Exercício</label>' +
+    '<div class="rowline mt8" style="gap:8px">' +
+    '<label class="btn btn-ghost btn-sm ripple" style="flex:1;cursor:pointer;text-align:center">' +
+    icon('camera') + ' Escolher Foto' +
+    '<input type="file" id="cex-file" accept="image/*" style="display:none" data-chg="cex-file">' +
+    '</label>' +
+    '</div>' +
+    '<input class="fld mt8" id="cex-url" placeholder="Ou cole o link de uma imagem (https://...)" data-inp="cex-url">' +
+    '<div id="cex-preview" class="ex-preview-box" style="display:none"></div>' +
+
+    '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="cex-save">' +
+    icon('check') + ' Salvar Exercício na Biblioteca</button>'
+  );
+}
+
+/* Processa upload de imagem para o exercício personalizado */
+async function handleCustomExFile(inputEl){
+  if(!inputEl || !inputEl.files || !inputEl.files[0]) return;
+  const file = inputEl.files[0];
+  try{
+    const b64 = await resizeImage(file, 600, 0.82);
+    pendingCustomExImg = b64;
+    renderCustomExPreview();
+  } catch(err){
+    toast('Não foi possível processar a imagem.', 'bad');
+  }
+}
+
+function handleCustomExURL(url){
+  pendingCustomExImg = (url || '').trim();
+  renderCustomExPreview();
+}
+
+function renderCustomExPreview(){
+  const box = document.getElementById('cex-preview');
+  if(!box) return;
+  if(pendingCustomExImg){
+    box.style.display = 'block';
+    box.innerHTML = '<img src="' + esc(pendingCustomExImg) + '" alt="Prévia"><button class="iconbtn ripple" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff" data-act="cex-img-clear">' + icon('trash') + '</button>';
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+/* Salva o exercício customizado e atualiza a biblioteca */
+function saveCustomExercise(){
+  const nameEl = document.getElementById('cex-name');
+  const groupEl = document.getElementById('cex-group');
+  const equipEl = document.getElementById('cex-equip');
+  const descEl = document.getElementById('cex-desc');
+
+  const name = nameEl ? nameEl.value.trim() : '';
+  if(!name){
+    toast('Dê um nome ao exercício.', 'bad');
+    if(nameEl) nameEl.focus();
+    return;
+  }
+
+  const group = groupEl ? groupEl.value : 'Peito';
+  const equip = equipEl ? equipEl.value : 'Livre';
+  const desc = descEl ? descEl.value.trim() : '';
+  const img = pendingCustomExImg || '';
+
+  const newEx = {
+    id: 'ex-c-' + uid(),
+    name: name,
+    group: group,
+    equip: equip,
+    desc: desc,
+    img: img,
+    custom: true
+  };
+
+  state.library.push(newEx);
+  save();
+  closeModal();
+  renderLibList();
+
+  if(libSelect && editing){
+    editing.ex.push({ exId: newEx.id, rpe: 8, rest: 90, sets: [{ type:'work', reps: 10 }] });
+    const sc = document.getElementById('stack').lastElementChild;
+    if(sc) closeScreen(sc);
+    if(editorEl) renderEditorInto(editorEl);
+    toast('Exercício "' + name + '" criado e adicionado à ficha!', 'ok', 'check');
+  } else {
+    toast('Exercício "' + name + '" salvo com sucesso na biblioteca!', 'ok', 'check');
+  }
+}
+
+/* Excluir exercício personalizado */
+function deleteCustomExercise(exId){
+  const idx = state.library.findIndex(function(e){ return e.id === exId; });
+  if(idx === -1) return;
+  const name = state.library[idx].name;
+  state.library.splice(idx, 1);
+  save();
+  closeModal();
+  renderLibList();
+  toast('Exercício "' + name + '" removido da biblioteca.', 'ok');
 }
 
 function openEditor(id){
@@ -78,7 +252,7 @@ function renderEditorInto(el){
   }).join('');
 
   const cards = e.ex.map(function(x, i){
-    const lib = libById(x.exId) || { name:'Exercício removido', group:'—' };
+    const lib = libById(x.exId) || { name:'Exercício removido', group:'—', equip:'Livre' };
     const setRows = x.sets.map(function(st, j){
       const m = TYPE_META[st.type] || TYPE_META.work;
       return '<div class="setrow">' +
@@ -94,7 +268,7 @@ function renderEditorInto(el){
     return '<div class="excard">' +
       '<div class="rowline"><div style="flex:1">' +
       '<b style="font-size:15.5px">' + esc(lib.name) + '</b>' +
-      '<div class="lbl mt8" style="color:var(--dim)">' + esc(lib.group) + '</div></div>' +
+      '<div class="lbl mt8" style="color:var(--dim)">' + esc(lib.group) + ' · ' + esc(lib.equip || 'Livre') + '</div></div>' +
       '<div style="display:flex;gap:6px">' +
       '<button class="iconbtn ripple" style="width:34px;height:34px" data-act="ed-ex-move" data-arg="' + i + ':up" aria-label="Subir">' + icon('up') + '</button>' +
       '<button class="iconbtn ripple" style="width:34px;height:34px" data-act="ed-ex-move" data-arg="' + i + ':down" aria-label="Descer">' + icon('down') + '</button>' +
@@ -212,7 +386,7 @@ async function runEditorAIGeneration(){
   }
 
   // Renderiza prévia das sugestões
-  const rows = result.exercises.map(function(item, idx){
+  const rows = result.exercises.map(function(item){
     const lib = libById(item.exId);
     return '<div class="wrow" style="padding:10px 12px;margin-bottom:8px">' +
       '<div style="flex:1"><b style="font-size:14px">' + esc(lib ? lib.name : 'Exercício') + '</b>' +

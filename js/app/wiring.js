@@ -1,6 +1,7 @@
 const ACTIONS = {
   'nav': function(d){ go(d.arg); },
   'screen-close': function(){ closeScreen(); },
+  'modal-close': function(){ closeModal(); },
 
   'auth-mode': function(d){ authMode = d.arg; renderAuth(); },
   'auth-submit': function(){ authSubmit(); },
@@ -23,6 +24,10 @@ const ACTIONS = {
       });
   },
   'w-start': function(d){ startSession(d.arg); },
+  'w-tab': function(d){ workoutViewTab = d.arg; RENDER.workouts(); },
+  'w-preset-view': function(d){ openPresetDetails(d.arg); },
+  'w-preset-import': function(d){ importPresetRoutine(d.arg); },
+  'w-preset-import-single': function(d){ importPresetSingle(d.arg); },
   'lib-browse': function(){ browseLibrary(false); },
 
   'ai-open': function(){ openAIScreen(); },
@@ -113,30 +118,20 @@ const ACTIONS = {
     toast('Exercício adicionado à ficha.', 'ok');
   },
   'lib-new': function(){
-    modalHTML('<div class="sheet-grip"></div><div class="h-display h2">EXERCÍCIO PERSONALIZADO</div>' +
-      '<label class="flabel lbl">Nome</label><input class="fld" id="lc-name" placeholder="Ex.: Remada Cavalinho" maxlength="45">' +
-      '<label class="flabel lbl">Grupo muscular</label>' +
-      '<select class="fld" id="lc-group">' + ['Peito','Costas','Pernas','Ombros','Braços','Core'].map(function(g){ return '<option>' + g + '</option>'; }).join('') + '</select>' +
-      '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="lib-new-save">Criar exercício</button>');
+    openCustomExerciseModal();
   },
-  'lib-new-save': function(){
-    const name = document.getElementById('lc-name').value.trim();
-    if(!name){ toast('Dê um nome ao exercício.', 'bad'); return; }
-    const group = document.getElementById('lc-group').value;
-    const newEx = { id:'ex-c-'+uid(), name: name, group: group, custom: true };
-    state.library.push(newEx);
-    save();
-    closeModal();
-    renderLibList();
-    if(libSelect && editing){
-      editing.ex.push({ exId: newEx.id, rpe: 8, rest: 90, sets: [{ type:'work', reps: 10 }] });
-      const sc = document.getElementById('stack').lastElementChild;
-      if(sc) closeScreen(sc);
-      if(editorEl) renderEditorInto(editorEl);
-      toast('Exercício "' + name + '" criado e adicionado à ficha!', 'ok');
-    } else {
-      toast('Exercício criado na biblioteca.', 'ok');
-    }
+  'lib-view-ex': function(d){
+    openExerciseDetail(d.arg);
+  },
+  'lib-del-custom': function(d){
+    deleteCustomExercise(d.arg);
+  },
+  'cex-save': function(){
+    saveCustomExercise();
+  },
+  'cex-img-clear': function(){
+    pendingCustomExImg = '';
+    renderCustomExPreview();
   },
 
   'ac-toggle-set': function(d){
@@ -335,6 +330,16 @@ const ACTIONS = {
       : null;
     save(); RENDER.nutrition();
   },
+  'nutr-tab': function(d){
+    nutrTab = d.arg;
+    RENDER.nutrition();
+  },
+  'nutr-toggle-micros': function(){
+    toggleMicros();
+  },
+  'nutr-man-save': function(){
+    saveManualMeal();
+  },
   'nutr-ai-analyze': function(){ runNutritionAIAnalysis(); },
   'nutr-meal-save': function(){ saveLastAnalysisToDiary(); },
   'nutr-chip': function(d){
@@ -372,7 +377,8 @@ const INPUTS = {
   'lib-search': function(el){ libQuery = el.value; renderLibList(); },
   'macro-p': function(el){ macroInput(el, 'p'); },
   'macro-c': function(el){ macroInput(el, 'c'); },
-  'macro-f': function(el){ macroInput(el, 'f'); }
+  'macro-f': function(el){ macroInput(el, 'f'); },
+  'cex-url': function(el){ handleCustomExURL(el.value); }
 };
 function macroInput(el, key){
   if(!state.nutrition.custom) return;
@@ -389,6 +395,7 @@ function macroInput(el, key){
 }
 const CHANGES = {
   'ex-select': function(el){ chartExSel = el.value; RENDER.progress(); },
+  'cex-file': function(el){ handleCustomExFile(el); },
   'post-photo': function(el){
     const file = el.files && el.files[0];
     if(!file) return;

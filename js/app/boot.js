@@ -30,11 +30,15 @@ function openOnboarding(){
 
     '<label class="flabel lbl mt14">Nível de atividade</label><select class="fld mt8" id="ob-activity">' + actOpts + '</select>' +
 
-    '<label class="flabel lbl mt14">Como deseja começar seu programa?</label>' +
+    '<label class="flabel lbl mt14">Como deseja começar seu programa de treino?</label>' +
     '<select class="fld mt8" id="ob-starter">' +
-    '<option value="abc">Fichas Clássicas ABC (pesos em branco, você registra na academia)</option>' +
-    '<option value="ai">Criar meu programa personalizado com a IA (Gemini)</option>' +
-    '<option value="empty">Começar do zero (vou criar minhas próprias fichas)</option>' +
+    '<option value="empty">Montar do zero (vou criar meus próprios treinos)</option>' +
+    '<option value="ai">Criar personalizado com a IA (Gemini)</option>' +
+    '<option value="preset-ppl">Rotina Pronta Opcional: Push / Pull / Legs (PPL)</option>' +
+    '<option value="preset-upper-lower">Rotina Pronta Opcional: Upper / Lower (4 dias)</option>' +
+    '<option value="preset-abc">Rotina Pronta Opcional: ABC Clássico</option>' +
+    '<option value="preset-arnold">Rotina Pronta Opcional: Arnold Split</option>' +
+    '<option value="preset-fullbody">Rotina Pronta Opcional: Full Body 3x</option>' +
     '</select>' +
 
     '<button class="btn btn-pri ripple mt28" style="width:100%;padding:16px;font-size:16px" data-act="ob-save">' +
@@ -58,11 +62,21 @@ function saveOnboarding(){
     activity: document.getElementById('ob-activity').value
   });
 
-  const starter = (document.getElementById('ob-starter') || {}).value || 'abc';
-  if(starter === 'abc'){
-    createStarterWorkouts();
-  } else {
-    state.workouts = [];
+  const starter = (document.getElementById('ob-starter') || {}).value || 'empty';
+  state.workouts = [];
+
+  if(starter.startsWith('preset-')){
+    const preset = PRESET_ROUTINES.find(function(p){ return p.id === starter; });
+    if(preset){
+      preset.workouts.forEach(function(w){
+        const cloned = JSON.parse(JSON.stringify(w));
+        cloned.id = uid();
+        cloned.ex.forEach(function(e){
+          (e.sets || []).forEach(function(st){ st.w = ''; st.done = false; });
+        });
+        state.workouts.push(cloned);
+      });
+    }
   }
 
   // Garante que o usuário comece 100% limpo, sem cargas ou PRs fictícios
