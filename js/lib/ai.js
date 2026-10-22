@@ -4,7 +4,7 @@ let aiDraft = null, aiBusy = false;
 async function geminiCall(prompt, wantJson){
   const key = state.settings.gemini;
   if(!key) return null;
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   for(const m of models){
     try{
       const body = { contents:[{ parts:[{ text: prompt }] }] };
@@ -373,8 +373,9 @@ function localEstimateMeal(text){
         matched++;
         // Multiplicador baseado em quantidade mencionada
         let mult = 1;
-        const re = new RegExp('(\\d+)\\s*(?:g|gramas|ml|ovos|unidades)?\\s*(?:de)?\\s*' + key);
-        const m = t.match(re);
+        const re1 = new RegExp('(\d+)\s*(?:g|gramas|ml|ovos|unidades)?\s*(?:de)?\s*' + key);
+        const re2 = new RegExp(key + '\s*(?:de)?\s*(\d+)\s*(?:g|gramas|ml|ovos|unidades)?');
+        const m = t.match(re1) || t.match(re2);
         if(m && m[1]){
           const q = parseFloat(m[1]);
           if(q > 20) mult = q / 100;

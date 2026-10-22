@@ -22,13 +22,18 @@ RENDER.home = function(){
       '<div class="mut mt8" style="font-size:13px">' + w.ex.length + ' exercícios · ' +
       w.ex.reduce(function(s,e){ return s + e.sets.length; },0) + ' séries</div></div>' +
       '<div style="width:54px;height:54px;border-radius:16px;background:var(--acc);color:#04121f;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(56,189,248,.4)">' +
-      icon('play') + '</div></div></div>';
+      icon('play') + '</div></div></div>' +
+      '<div class="rowline mt8 rise" style="--d:140ms;gap:8px">' +
+      '<button class="btn btn-ghost btn-sm ripple" style="flex:1" data-act="w-quick">' + icon('play') + ' Iniciar Treino Livre</button>' +
+      '<button class="btn btn-ghost btn-sm ripple" style="flex:1" data-act="nav" data-arg="workouts">' + icon('dumbbell') + ' Ver Minhas Fichas</button>' +
+      '</div>';
   } else {
     heroCard = '<div class="card mt14 rise" style="text-align:center;padding:26px 18px">' +
       '<b style="font-size:17px;font-family:var(--fd);letter-spacing:.5px;text-transform:uppercase">Nenhuma ficha ativa ainda</b>' +
       '<p class="mut mt8" style="font-size:13px;line-height:1.5">Comece criando sua própria ficha, use a IA para montar um treino personalizado ou escolha um modelo pronto (PPL, Upper/Lower, ABC...).</p>' +
       '<div class="rowline mt14" style="justify-content:center;gap:8px;flex-wrap:wrap">' +
-      '<button class="btn btn-pri ripple" data-act="w-new">' + icon('plus') + ' Criar Treino</button>' +
+      '<button class="btn btn-pri ripple" data-act="w-quick">' + icon('play') + ' Iniciar Treino Livre</button>' +
+      '<button class="btn btn-ghost ripple" data-act="w-new">' + icon('plus') + ' Criar Treino</button>' +
       '<button class="btn btn-ghost ripple" data-act="nav" data-arg="workouts">' + icon('bolt2') + ' Ver Modelos Prontos</button>' +
       '<button class="btn btn-ai ripple" data-act="ai-open">' + icon('wand') + ' Gerar com IA</button>' +
       '</div></div>';

@@ -45,6 +45,8 @@ const IC = {
   gem:'<path d="M7 4h10l3.5 6L12 20.5 3.5 10z"/><path d="M3.5 10h17"/><path d="M9 4l-1.5 6L12 20.5"/><path d="M15 4l1.5 6L12 20.5"/>',
   crown:'<path d="M4 8.5l4 3.5L12 5l4 7 4-3.5-1.5 9.5h-13z"/><path d="M6.5 20.5h11"/>',
   bolt2:'<path d="M8 3h8l-4 6h5L7 21l2.5-8H5.5z"/>',
-  skip:'<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>'
+  skip:'<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
+  plate:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/>',
+  fileCsv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h8"/>'
 };
 const icon = (n, cls) => '<svg class="ic ' + (cls||'') + '" viewBox="0 0 24 24" aria-hidden="true">' + (IC[n]||'') + '</svg>';

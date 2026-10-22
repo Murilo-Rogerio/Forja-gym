@@ -1,3 +1,4 @@
+import os
 import glob, re
 
 files = glob.glob('js/**/*.js', recursive=True)
@@ -43,7 +44,7 @@ defined_symbols = set([
 ])
 
 for f in load_order:
-    path = f.replace('/', '\\')
+    path = os.path.normpath(f)
     with open(path, 'r', encoding='utf-8') as fp:
         code = fp.read()
     # Find all function definitions: function foo, async function foo, const foo = ...

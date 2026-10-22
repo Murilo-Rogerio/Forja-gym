@@ -31,6 +31,21 @@ const ACTIONS = {
       });
   },
   'w-start': function(d){ startSession(d.arg); },
+  'w-quick': function(){ startQuickSession(); },
+  'w-dup': function(d){
+    const w = state.workouts.find(function(x){ return x.id === d.arg; });
+    if(!w) return;
+    const cloned = JSON.parse(JSON.stringify(w));
+    cloned.id = uid();
+    cloned.name = cloned.name + ' (Cópia)';
+    state.workouts.push(cloned);
+    save();
+    RENDER.workouts();
+    toast('Ficha duplicada como "' + cloned.name + '".', 'ok');
+  },
+  'w-share': function(d){ shareWorkoutRoutine(d.arg); },
+  'w-import-code': function(){ openImportWorkoutModal(); },
+  'w-import-apply': function(){ applyWorkoutImport(); },
   'w-tab': function(d){ workoutViewTab = d.arg; RENDER.workouts(); },
   'w-preset-view': function(d){ openPresetDetails(d.arg); },
   'w-preset-import': function(d){ importPresetRoutine(d.arg); },
@@ -117,6 +132,29 @@ const ACTIONS = {
     renderLibList();
   },
   'lib-add': function(d){
+    if(window.libAddContext === 'active' && active){
+      const last = historyOf(d.arg).slice(-1)[0];
+      const targetReps = 10;
+      const initialWeight = last ? last.w : '';
+      active.ex.push({
+        exId: d.arg,
+        rest: 90,
+        sets: [
+          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false },
+          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false },
+          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false }
+        ]
+      });
+      state.active = active;
+      save();
+      const sc = document.getElementById('stack').lastElementChild;
+      if(sc) closeScreen(sc);
+      window.libAddContext = 'editor';
+      if(activeScreenEl) renderActiveInto(activeScreenEl);
+      const lib = libById(d.arg);
+      toast('Exercício "' + (lib?lib.name:'') + '" adicionado ao treino!', 'ok', 'check');
+      return;
+    }
     if(!editing) return;
     editing.ex.push({ exId: d.arg, rpe: 8, rest: 90, sets: [{ type:'work', reps: 10 }] });
     const sc = document.getElementById('stack').lastElementChild;
@@ -141,6 +179,35 @@ const ACTIONS = {
     renderCustomExPreview();
   },
 
+  'plate-calc': function(d){
+    const parts = d.arg ? d.arg.split(':') : [];
+    openPlateCalculator(parts[0] != null ? +parts[0] : null, parts[1] != null ? +parts[1] : null);
+  },
+  'plate-calc-tool': function(){
+    openPlateCalculator(null, null);
+  },
+  'plate-adj': function(d){
+    plateCalcState.targetW = Math.max(plateCalcState.barW, +(plateCalcState.targetW + (+d.arg)).toFixed(1));
+    updatePlateCalcModal();
+  },
+  'plate-bar': function(d){
+    plateCalcState.barW = +d.arg;
+    plateCalcState.targetW = Math.max(plateCalcState.barW, plateCalcState.targetW);
+    updatePlateCalcModal();
+  },
+  'plate-apply-one': function(){
+    applyPlateWeightToActive(false);
+  },
+  'plate-apply-all': function(){
+    applyPlateWeightToActive(true);
+  },
+  'hevy-import-open': function(){
+    openHevyImportModal();
+  },
+  'hevy-parse-text': function(){
+    const textEl = document.getElementById('hevy-csv-text');
+    processHevyCSVText(textEl ? textEl.value : '');
+  },
   'ac-toggle-set': function(d){
     const parts = d.arg.split(':');
     toggleSet(+parts[0], +parts[1]);
@@ -153,15 +220,23 @@ const ACTIONS = {
     state.active = active; save();
     renderActiveInto(activeScreenEl);
   },
+  'ac-set-add': function(d){ addActiveSet(+d.arg); },
+  'ac-set-del': function(d){ const parts = d.arg.split(':'); delActiveSet(+parts[0], +parts[1]); },
+  'ac-ex-add': function(){ browseLibrary(true, 'active'); },
+  'ac-ex-del': function(d){ delActiveEx(+d.arg); },
   'ac-adj': function(d){
     if(!active) return;
     const parts = d.arg.split(':'), f = parts[0], i = +parts[1], j = +parts[2], delta = +parts[3];
     const ex = active.ex[i]; if(!ex) return;
     const s = ex.sets[j]; if(!s) return;
-    const key = f === 'w' ? 'w' : 'r';
-    const step = f === 'w' ? 2.5 : 1;
-    const next = parseNum(s[key]) + delta*step;
-    s[key] = next > 0 ? +next.toFixed(1) : '';
+    if(f === 'w'){
+      const curW = parseNum(s.w);
+      const nextW = Math.max(0, +(curW + delta * 2.5).toFixed(1));
+      s.w = nextW > 0 ? nextW : (s.w === '' && delta < 0 ? '' : 0);
+    } else {
+      const curR = parseNum(s.r) || 10;
+      s.r = Math.max(1, curR + delta);
+    }
     state.active = active; save();
     renderActiveInto(activeScreenEl);
   },
@@ -269,6 +344,32 @@ const ACTIONS = {
   },
 
   'log-detail': function(d){ openLogDetail(d.arg); },
+  'log-share': function(d){ const l = state.logs.find(function(x){ return x.id === d.arg; }); if(l){ postLogRef = l; shareReport(); } },
+  'log-del': function(d){
+    const l = state.logs.find(function(x){ return x.id === d.arg; });
+    if(!l) return;
+    modalConfirm({
+      title: 'Excluir Treino',
+      msg: 'Deseja remover "' + l.name + '" (' + fmtDateL(l.date) + ') do seu histórico permanentemente?',
+      ok: 'Excluir',
+      danger: true
+    }).then(function(yes){
+      if(yes){
+        state.logs = state.logs.filter(function(x){ return x.id !== d.arg; });
+        rebuildRecords();
+        checkAchievements(true);
+        save();
+        const sc = document.getElementById('stack').lastElementChild;
+        if(sc) sc.remove();
+        toast('Treino removido do histórico.', 'ok');
+        if(RENDER[curView]) RENDER[curView]();
+      }
+    });
+  },
+  'backup-export': function(){ exportBackupData(); },
+  'hevy-export-csv': function(){ exportHevyCSV(); },
+  'backup-import': function(){ importBackupData(); },
+  'feed-seed': function(){ seedFeedDemo(); RENDER.feed(); toast('Feed da comunidade carregado!', 'ok', 'users'); },
   'rep-open': function(){
     const sc = document.getElementById('stack').lastElementChild;
     if(sc && sc.dataset.nodismiss === '1'){ postLogRef = postLogRef || state.logs[state.logs.length-1]; }
@@ -374,18 +475,33 @@ const ACTIONS = {
 const INPUTS = {
   'set-w': function(el){
     if(active){ const ex = active.ex[+el.dataset.ex];
-      if(ex && ex.sets[+el.dataset.set]) ex.sets[+el.dataset.set].w = el.value; }
+      if(ex && ex.sets[+el.dataset.set]){
+        ex.sets[+el.dataset.set].w = el.value;
+        state.active = active; save();
+      }
+    }
   },
   'set-r': function(el){
     if(active){ const ex = active.ex[+el.dataset.ex];
-      if(ex && ex.sets[+el.dataset.set]) ex.sets[+el.dataset.set].r = el.value; }
+      if(ex && ex.sets[+el.dataset.set]){
+        ex.sets[+el.dataset.set].r = el.value;
+        state.active = active; save();
+      }
+    }
   },
   'ed-name': function(el){ if(editing) editing.name = el.value; },
   'lib-search': function(el){ libQuery = el.value; renderLibList(); },
   'macro-p': function(el){ macroInput(el, 'p'); },
   'macro-c': function(el){ macroInput(el, 'c'); },
   'macro-f': function(el){ macroInput(el, 'f'); },
-  'cex-url': function(el){ handleCustomExURL(el.value); }
+  'cex-url': function(el){ handleCustomExURL(el.value); },
+  'plate-target': function(el){
+    const val = parseNum(el.value);
+    if(val >= 0){
+      plateCalcState.targetW = val;
+      updatePlateCalcModal();
+    }
+  }
 };
 function macroInput(el, key){
   if(!state.nutrition.custom) return;
@@ -403,6 +519,9 @@ function macroInput(el, key){
 const CHANGES = {
   'ex-select': function(el){ chartExSel = el.value; RENDER.progress(); },
   'cex-file': function(el){ handleCustomExFile(el); },
+  'hevy-file-select': function(el){
+    handleHevyFileSelect(el);
+  },
   'post-photo': function(el){
     const file = el.files && el.files[0];
     if(!file) return;

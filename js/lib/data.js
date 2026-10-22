@@ -382,11 +382,15 @@ const ACHS = [
 
 /* Metadados dos tipos de séries */
 const TYPE_META = {
-  work: { l:'V', full:'Válida (Série Principal)', cls:'st-work', color:'#38bdf8' },
+  work: { l:'V', full:'Válida (Série Normal)', cls:'st-work', color:'#38bdf8' },
+  warm: { l:'A', full:'Aquecimento (Warm-up)', cls:'st-warm', color:'#94a3b8' },
   prep: { l:'P', full:'Preparatória (Feeder Set)', cls:'st-prep', color:'#fbbf24' },
-  warm: { l:'A', full:'Aquecimento (Warm-up)', cls:'st-warm', color:'#94a3b8' }
+  drop: { l:'D', full:'Drop-Set (Redução de carga)', cls:'st-drop', color:'#c084fc' },
+  fail: { l:'F', full:'Falha Muscular (Até o limite)', cls:'st-fail', color:'#f43f5e' }
 };
 
 function nextType(t){
-  return t === 'work' ? 'prep' : t === 'prep' ? 'warm' : 'work';
+  const cycle = ['work', 'warm', 'prep', 'drop', 'fail'];
+  const idx = cycle.indexOf(t);
+  return idx >= 0 ? cycle[(idx + 1) % cycle.length] : 'work';
 }

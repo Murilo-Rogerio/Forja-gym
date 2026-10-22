@@ -53,7 +53,35 @@ RENDER.progress = function(){
       '</select><div class="chartwrap mt14"><canvas class="chart" id="evo-cv" data-h="200"></canvas></div>' +
       '<div id="evo-foot" class="mut mt8" style="font-size:12.5px"></div>';
   } else evoBlock = '<div class="empty mt8">Conclua treinos para ver sua curva de força.</div>';
-  document.querySelector('.view[data-view="progress"]').innerHTML =
+    // Volume e distribuição por grupo muscular (radar/heatmap de estímulo Hevy)
+  const groupTotals = {};
+  state.logs.forEach(function(l){
+    if(l.groups){
+      for(const g in l.groups){
+        groupTotals[g] = (groupTotals[g] || 0) + (l.groups[g] || 0);
+      }
+    }
+  });
+  const maxGroupVol = Math.max.apply(null, Object.values(groupTotals).concat([1]));
+  const groupList = ['Peito','Costas','Pernas','Ombros','Braços','Core'];
+  const groupBarsHTML = groupList.map(function(g){
+    const v = groupTotals[g] || 0;
+    const pct = Math.min(100, Math.round((v / maxGroupVol) * 100));
+    return '<div class="micro-item" style="padding:8px 10px">' +
+      '<div class="top"><span class="nm" style="font-size:12px">' + g + '</span>' +
+      '<span class="val num" style="font-size:12px">' + (v > 0 ? fmtKg(v) : '0 kg') + '</span></div>' +
+      '<div class="micro-track" style="height:4px"><div class="micro-fill" style="width:' + pct + '%;background:linear-gradient(90deg,#2563eb,#38bdf8)"></div></div>' +
+      '</div>';
+  }).join('');
+  const muscleBalanceCard = state.logs.length ? (
+    '<div class="mt20 rise" style="--d:195ms">' +
+    '<div class="rowline"><div class="lbl">Distribuição Muscular Acumulada</div>' +
+    '<span class="dim" style="font-size:11.5px">' + state.logs.length + ' treinos</span></div>' +
+    '<div class="micro-grid mt8">' + groupBarsHTML + '</div>' +
+    '</div>'
+  ) : '';
+
+document.querySelector('.view[data-view="progress"]').innerHTML =
     '<div class="eyebrow rise">Evolução</div><div class="h-display h1 mt8 rise" style="--d:60ms">SEU<br>PROGRESSO</div>' +
     '<div class="statband rise" style="--d:90ms"><div><b class="num">' + fmtKg(totalVolume()) + '</b><span>Tonelagem total</span></div>' +
     '<div><b class="num">' + state.logs.length + '</b><span>Sessões</span></div>' +
@@ -69,7 +97,7 @@ RENDER.progress = function(){
       ? '<div class="empty">Sem volume registrado ainda.</div>'
       : '<canvas class="chart" id="vol-cv" data-h="180"></canvas>') + '</div></div>' +
     '<div class="mt20 rise" style="--d:180ms"><div class="lbl">Evolução de carga por exercício</div>' + evoBlock + '</div>' +
-    '<div class="mt20 rise" style="--d:210ms"><div class="lbl">Histórico de sessões</div>' +
+    muscleBalanceCard + '<div class="mt20 rise" style="--d:210ms"><div class="lbl">Histórico de sessões</div>' +
     (histRows || '<div class="empty mt8">Nada por aqui ainda.</div>') + '</div>' +
     '<div class="mt28 rise" style="--d:240ms"><div class="rowline"><div class="lbl">Conquistas</div>' +
     '<span class="dim num" style="font-size:12px">' + Object.keys(state.ach).length + '/' + ACHS.length + '</span></div>' +
@@ -84,7 +112,13 @@ RENDER.progress = function(){
       requestAnimationFrame(function(){ const cv = document.getElementById('evo-cv'); if(cv) drawLineChart(cv, pts); });
       const last = h[h.length-1];
       const foot = document.getElementById('evo-foot');
-      if(foot) foot.innerHTML = 'Recorde estimado (e1RM): <b style="color:var(--acc)" class="num">' + fmtN(last.e) + 'kg</b> · atual: ' + fmtN(last.w) + 'kg × ' + last.r;
+      if(foot){
+        if(last.isBodyweight){
+          foot.innerHTML = 'Recorde de reps (peso corporal): <b style="color:var(--acc)" class="num">' + last.r + ' reps</b>';
+        } else {
+          foot.innerHTML = 'Recorde estimado (e1RM): <b style="color:var(--acc)" class="num">' + fmtN(last.e) + 'kg</b> · atual: ' + fmtN(last.w) + 'kg × ' + last.r;
+        }
+      }
     }
   }
 };

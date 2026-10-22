@@ -1,4 +1,4 @@
-const CACHE = 'forja-v3-presets-macros';
+const CACHE = 'forja-v4-hevy-plus';
 const ASSETS = [
   './', './index.html', './manifest.json', './icons/icon.svg',
   './css/tokens.css', './css/base.css', './css/components.css',

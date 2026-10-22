@@ -227,22 +227,8 @@ window.addEventListener('beforeunload', function(){ if(active){ state.active = a
     save();
     if(session.mode === 'firebase') fbInit().then(function(){ if(FB) fbSyncBestEffort(); });
   } else {
-    let hasGuestData = false;
-    try{
-      const raw = JSON.parse(localStorage.getItem(LS_KEY));
-      hasGuestData = !!(raw && raw.user && raw.user.name);
-    }catch(e){}
-    if(hasGuestData){
-      setSession({ mode:'guest' });
-      load();
-      setTabbarIcons();
-      go('home');
-      checkAchievements(true);
-      save();
-    } else {
-      setTabbarIcons();
-      renderAuth();
-    }
+    setTabbarIcons();
+    renderAuth();
   }
   initPWA();
 })();

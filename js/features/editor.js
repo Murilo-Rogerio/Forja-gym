@@ -55,10 +55,11 @@ function renderLibList(){
   if(el) el.innerHTML = libListHTML();
 }
 
-function browseLibrary(selectMode){
+function browseLibrary(selectMode, ctx){
   libQuery = '';
   libFilter = 'Todos';
   libSelect = !!selectMode;
+  window.libAddContext = ctx || (selectMode && activeScreenEl && (!editorEl || !editorEl.isConnected) ? 'active' : 'editor');
 
   openScreen(
     screenHeader('Biblioteca de Exercícios', {
@@ -211,7 +212,16 @@ function saveCustomExercise(){
   closeModal();
   renderLibList();
 
-  if(libSelect && editing){
+  if(libSelect && window.libAddContext === 'active' && active){
+    active.ex.push({ exId: newEx.id, rest: 90, sets: [{ type:'work', reps: 10, w: '', r: 10, done: false }] });
+    state.active = active;
+    save();
+    const sc = document.getElementById('stack').lastElementChild;
+    if(sc) closeScreen(sc);
+    window.libAddContext = 'editor';
+    if(activeScreenEl) renderActiveInto(activeScreenEl);
+    toast('Exercício "' + name + '" criado e adicionado ao treino!', 'ok', 'check');
+  } else if(libSelect && editing){
     editing.ex.push({ exId: newEx.id, rpe: 8, rest: 90, sets: [{ type:'work', reps: 10 }] });
     const sc = document.getElementById('stack').lastElementChild;
     if(sc) closeScreen(sc);
@@ -311,9 +321,11 @@ function renderEditorInto(el){
     '<div class="stack mt14">' + (cards || '<div class="empty">Nenhum exercício ainda. Clique em "Exercício" ou "Sugerir IA" para montar sua ficha.</div>') + '</div>' +
     '<div class="typeleg mt14">' +
     '<span><i style="background:var(--st-work)"></i>Válida (V)</span>' +
-    '<span><i style="background:var(--st-prep)"></i>Preparatória (P)</span>' +
-    '<span><i style="background:var(--st-warm)"></i>Aquecimento (A)</span>' +
-    '<span class="dim" style="font-size:10px">(toque no selo da série para alternar)</span>' +
+    '<span><i style="background:var(--st-warm)"></i>Aquec. (A)</span>' +
+    '<span><i style="background:var(--st-prep)"></i>Prep. (P)</span>' +
+    '<span><i style="background:var(--st-drop)"></i>Drop (D)</span>' +
+    '<span><i style="background:var(--st-fail)"></i>Falha (F)</span>' +
+    '<span class="dim" style="font-size:10px">(toque no selo para mudar)</span>' +
     '</div></div>';
 
   const bd2 = el.querySelector('.screen-bd');

@@ -9,12 +9,37 @@ function historyOf(exId){
     .sort(function(a,b){ return a.date - b.date; })
     .map(function(l){
       const e = l.ex.find(function(x){ return x.exId === exId; });
-      const done = e.sets.filter(function(s){ return s.done && s.w > 0 && s.type === 'work'; });
-      const top = done.slice().sort(function(a,b){ return e1RM(b.w,b.r) - e1RM(a.w,a.r); })[0] || null;
+      const done = (e.sets || []).filter(function(s){ return s.done && (s.w > 0 || s.r > 0) && (s.type === 'work' || s.type === 'drop' || s.type === 'fail'); });
+      const top = done.slice().sort(function(a,b){
+        const scA = a.w > 0 ? e1RM(a.w, a.r) : a.r;
+        const scB = b.w > 0 ? e1RM(b.w, b.r) : b.r;
+        return scB - scA;
+      })[0] || null;
       if(!top) return null;
       const avg = done.length ? done.reduce(function(s,x){ return s + (x.rpe||8); },0)/done.length : 8;
-      return { date: l.date, w: top.w, r: top.r, rpe: avg, e: e1RM(top.w, top.r) };
+      const score = top.w > 0 ? e1RM(top.w, top.r) : top.r;
+      return { date: l.date, w: top.w, r: top.r, rpe: avg, e: score, isBodyweight: !(top.w > 0) };
     }).filter(Boolean);
+}
+function rebuildRecords(){
+  state.records = {};
+  const sortedLogs = state.logs.slice().sort(function(a,b){ return a.date - b.date; });
+  for(const log of sortedLogs){
+    for(const e of (log.ex || [])){
+      const work = (e.sets || []).filter(function(s){ return (s.type === 'work' || s.type === 'drop' || s.type === 'fail') && (s.w > 0 || s.r > 0); });
+      const top = work.slice().sort(function(a,b){
+        const scA = a.w > 0 ? e1RM(a.w, a.r) : a.r;
+        const scB = b.w > 0 ? e1RM(b.w, b.r) : b.r;
+        return scB - scA;
+      })[0];
+      if(!top) continue;
+      const score = top.w > 0 ? e1RM(top.w, top.r) : top.r;
+      const cur = state.records[e.exId];
+      if(!cur || score > cur.best){
+        state.records[e.exId] = { best: score, w: top.w, r: top.r, date: log.date };
+      }
+    }
+  }
 }
 function totalVolume(){ return state.logs.reduce(function(s,l){ return s + l.volume; }, 0); }
 function weeklyStats(){

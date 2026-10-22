@@ -292,10 +292,11 @@ function processInstantGoogleLogin(){
   const email = (emailInput && emailInput.value ? emailInput.value.trim().toLowerCase() : '') || 'atleta@gmail.com';
 
   closeModal();
-  setSession({ mode:'google', email: email, name: name, uid: 'g-' + uid() });
+  const uidClean = 'g-' + normTxt(email).replace(/\s+/g, '_');
+  setSession({ mode:'google', email: email, name: name, uid: uidClean });
   migrateGuestInto();
   load();
-  state.user.name = name;
+  if(!state.user.name) state.user.name = name;
   save();
   enterApp();
   toast('Conectado via Google como ' + name + '!', 'ok', 'flame');
@@ -317,6 +318,7 @@ async function afterFbLogin(user, nameOverride){
 function enterApp(){
   if(authEl){ authEl.remove(); authEl = null; }
   load();
+  if(session && session.name && !state.user.name) state.user.name = session.name;
   setTabbarIcons();
   go('home');
   if(!state.user.name) openOnboarding();

@@ -33,9 +33,16 @@ RENDER.profile = function(){
     '<button class="chip ripple ' + (state.settings.sound?'on':'') + '" data-act="set-sound">' + (state.settings.sound?'Ligado':'Desligado') + '</button></div>' +
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('vibrate') + ' Vibração</span>' +
     '<button class="chip ripple ' + (state.settings.vibrate?'on':'') + '" data-act="set-vib">' + (state.settings.vibrate?'Ligada':'Desligada') + '</button></div></div>' +
-    '<div class="lbl mt20 rise" style="--d:220ms">Aplicativo</div><div class="card mt8 rise" style="--d:230ms">' +
+    '<div class="lbl mt20 rise" style="--d:220ms">Aplicativo & Dados</div><div class="card mt8 rise" style="--d:230ms">' +
     '<p class="mut" style="font-size:13px;line-height:1.6">FORJA roda 100% offline — seus dados ficam no aparelho. Instale na tela inicial para experiência de app nativo.</p>' +
-    '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="install" id="install-btn">' + icon('download') + ' Instalar na tela inicial</button>' +
+    '<div class="stack mt14">' +
+    '<button class="btn btn-pri ripple" style="width:100%" data-act="install" id="install-btn">' + icon('download') + ' Instalar na tela inicial</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="hevy-import-open">' + icon('fileCsv') + ' Importar Histórico do Hevy (CSV)</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="plate-calc-tool">' + icon('plate') + ' Calculadora de Anilhas na Barra</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="backup-export">' + icon('download') + ' Exportar Backup Completo (JSON)</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="hevy-export-csv">' + icon('fileCsv') + ' Exportar Treinos em CSV (Compatível Hevy)</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="backup-import">' + icon('sync') + ' Restaurar Backup (JSON)</button>' +
+    '</div>' +
     (isIOS ? '<p class="dim mt8" style="font-size:12px">No iOS: toque em <b>Compartilhar</b> e depois <b>Adicionar à Tela de Início</b>.</p>' : '') + '</div>' +
     '<button class="btn btn-danger ripple mt20" style="width:100%" data-act="reset-data">' + icon('trash') + ' Limpar e Reiniciar Dados</button>' +
     '<p class="dim mt14" style="text-align:center;font-family:var(--fd);letter-spacing:2px;font-size:12px">FORJA · TREINO & PERFORMANCE</p>';
@@ -116,4 +123,98 @@ function openFbSettings(){
     '<textarea class="fld" id="fb-cfg" placeholder=\'{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}\'>' + (getFbCfg() ? esc(JSON.stringify(getFbCfg())) : '') + '</textarea>' +
     '<div class="split2 mt14"><button class="btn btn-ghost ripple" data-act="fb-disc">Desconectar</button>' +
     '<button class="btn btn-pri ripple" data-act="fb-save">Conectar</button></div>');
+}
+
+/* Backup e Restauração de Dados */
+function exportBackupData(){
+  const data = {
+    app: 'FORJA',
+    version: state.v,
+    exportedAt: new Date().toISOString(),
+    user: state.user,
+    workouts: state.workouts,
+    logs: state.logs,
+    records: state.records,
+    ach: state.ach,
+    nutrition: state.nutrition,
+    settings: state.settings,
+    posts: state.posts,
+    friends: state.friends
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'forja-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  toast('Backup exportado com sucesso.', 'ok', 'download');
+}
+
+function importBackupData(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const data = JSON.parse(evt.target.result);
+        if(!data.user || !Array.isArray(data.workouts) || !Array.isArray(data.logs)){
+          toast('Arquivo de backup inválido.', 'bad');
+          return;
+        }
+        modalConfirm({
+          title: 'Restaurar Backup',
+          msg: 'Deseja substituir os dados atuais pelos dados do backup (' + data.workouts.length + ' fichas, ' + data.logs.length + ' treinos concluídos)?',
+          ok: 'Restaurar',
+          danger: true
+        }).then(function(yes){
+          if(yes){
+            state = migrateState(Object.assign(defaultState(), data));
+            active = state.active || null;
+            save();
+            location.reload();
+          }
+        });
+      }catch(err){
+        toast('Erro ao ler arquivo de backup JSON.', 'bad');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* Exportar Histórico no formato Hevy CSV */
+function exportHevyCSV(){
+  if(!state.logs || !state.logs.length){
+    toast('Nenhum treino concluído para exportar.', 'bad');
+    return;
+  }
+  const rows = [
+    'Date,Workout Name,Exercise Name,Set Order,Weight,Reps,RPE,Distance,Seconds,Notes,Workout Notes'
+  ];
+
+  state.logs.slice().sort(function(a,b){ return a.date - b.date; }).forEach(function(l){
+    const dStr = new Date(l.date).toISOString().replace('T', ' ').slice(0, 19);
+    const wName = '"' + (l.name || 'Treino').replace(/"/g, '""') + '"';
+    (l.ex || []).forEach(function(e){
+      const lib = libById(e.exId);
+      const exName = '"' + (lib ? lib.name : 'Exercício').replace(/"/g, '""') + '"';
+      (e.sets || []).forEach(function(s, setIdx){
+        const w = s.w || 0;
+        const r = s.r || 0;
+        const rpe = s.rpe || 8;
+        rows.push([dStr, wName, exName, (setIdx + 1), w, r, rpe, 0, 0, '""', '""'].join(','));
+      });
+    });
+  });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'forja-workouts-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('Histórico de treinos exportado em CSV!', 'ok', 'fileCsv');
 }

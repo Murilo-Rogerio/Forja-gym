@@ -22,8 +22,14 @@ function postCardHTML(p, idx){
 }
 
 RENDER.feed = function(){
-  const merged = (remoteFeedCache || []).concat((state.posts || []).map(function(p){ p.own = true; return p; }))
-    .sort(function(a,b){ return b.at - a.at; });
+  if(!state.feedSeeded && (!state.posts || !state.posts.length)){
+    seedFeedDemo();
+  }
+  const myName = (state.user && state.user.name) || (session ? session.name : '');
+  const merged = (remoteFeedCache || []).concat((state.posts || []).map(function(p){
+    p.own = Boolean(myName && p.name === myName);
+    return p;
+  })).sort(function(a,b){ return b.at - a.at; });
 
   const emptyState =
     '<div class="card mt20 rise" style="text-align:center;padding:36px 20px">' +
@@ -35,7 +41,8 @@ RENDER.feed = function(){
     '<div class="mt14" style="display:flex;gap:8px;justify-content:center">' +
     '<button class="btn btn-pri ripple" data-act="feed-new">' + icon('plus') + ' Publicar Treino ou Foto</button>' +
     '<button class="btn btn-ghost ripple" data-act="feed-friends">' + icon('users') + ' Amigos</button>' +
-    '</div></div>';
+    '</div>' +
+    '<div class="mt14"><button class="btn btn-ghost btn-sm ripple" data-act="feed-seed">' + icon('spark') + ' Carregar Feed Demo</button></div></div>';
 
   document.querySelector('.view[data-view="feed"]').innerHTML =
     '<div class="rowline rise"><div><div class="eyebrow">Comunidade</div>' +

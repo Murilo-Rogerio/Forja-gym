@@ -10,8 +10,10 @@ RENDER.workouts = function(){
       '<b style="font-family:var(--fd);font-size:17.5px;letter-spacing:.5px;text-transform:uppercase">' + esc(w.name) + '</b>' +
       '<div class="mut" style="font-size:12.5px;margin-top:3px">' + esc(w.split) + ' · ' + w.ex.length + ' exercícios · ' +
       w.ex.reduce(function(s,e){ return s + e.sets.length; },0) + ' séries</div></div>' +
-      '<button class="iconbtn ripple" data-act="w-edit" data-arg="' + w.id + '" aria-label="Editar">' + icon('pencil') + '</button>' +
-      '<button class="iconbtn ripple" data-act="w-del" data-arg="' + w.id + '" aria-label="Excluir">' + icon('trash') + '</button></div>';
+      '<button class="iconbtn ripple" data-act="w-share" data-arg="' + w.id + '" aria-label="Compartilhar" title="Compartilhar ficha com amigos">' + icon('share') + '</button>' +
+      '<button class="iconbtn ripple" data-act="w-dup" data-arg="' + w.id + '" aria-label="Duplicar" title="Duplicar ficha">' + icon('copy') + '</button>' +
+      '<button class="iconbtn ripple" data-act="w-edit" data-arg="' + w.id + '" aria-label="Editar" title="Editar ficha">' + icon('pencil') + '</button>' +
+      '<button class="iconbtn ripple" data-act="w-del" data-arg="' + w.id + '" aria-label="Excluir" title="Excluir ficha">' + icon('trash') + '</button></div>';
   }).join('');
 
   // Cards dos modelos de treinos pré-prontos (opcionais)
@@ -52,7 +54,8 @@ RENDER.workouts = function(){
         '<div class="h-display h2">NENHUMA FICHA CRIADA</div>' +
         '<p class="mut mt8" style="font-size:13.5px;line-height:1.5">Você tem total liberdade para montar seu treino do zero, pedir ajuda à nossa IA ou escolher um modelo pronto opcional.</p>' +
         '<div class="mt20 stack" style="gap:10px">' +
-        '<button class="btn btn-pri ripple" style="width:100%" data-act="w-new">' + icon('plus') + ' Montar Meu Treino do Zero</button>' +
+        '<button class="btn btn-pri ripple" style="width:100%" data-act="w-quick">' + icon('play') + ' Iniciar Treino Livre Agora</button>' +
+        '<button class="btn btn-ghost ripple" style="width:100%" data-act="w-new">' + icon('plus') + ' Montar Meu Treino do Zero</button>' +
         '<button class="btn btn-ghost ripple" style="width:100%" data-act="ai-open">' + icon('wand') + ' Criar com Assistente IA (Gemini)</button>' +
         '<button class="btn btn-ghost ripple" style="width:100%" data-act="w-tab" data-arg="presets">' + icon('copy') + ' Explorar Rotinas Prontas Opcionais</button>' +
         '</div></div>')
@@ -70,7 +73,11 @@ RENDER.workouts = function(){
   document.querySelector('.view[data-view="workouts"]').innerHTML =
     '<div class="rowline rise"><div><div class="eyebrow">Programa & Rotinas</div>' +
     '<div class="h-display h1 mt8">FICHAS DE<br>TREINO</div></div>' +
-    '<button class="btn btn-pri ripple" data-act="w-new">' + icon('plus') + ' Nova</button></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' +
+    '<button class="btn btn-ghost btn-sm ripple" data-act="hevy-import-open" title="Importar histórico do Hevy (CSV)">' + icon('fileCsv') + ' Importar Hevy</button>' +
+    '<button class="btn btn-ghost btn-sm ripple" data-act="w-import-code" title="Importar ficha compartilhada">' + icon('download') + ' Importar Ficha</button>' +
+    '<button class="btn btn-ghost btn-sm ripple" data-act="w-quick" title="Iniciar treino avulso">' + icon('play') + ' Treino Livre</button>' +
+    '<button class="btn btn-pri btn-sm ripple" data-act="w-new">' + icon('plus') + ' Nova</button></div></div>' +
 
     // Seletor de Abas (Minhas Fichas vs Modelos Prontos)
     '<div class="tab-strip mt14 rise" style="--d:40ms">' +
@@ -172,4 +179,98 @@ function importPresetSingle(arg){
 
   RENDER.workouts();
   toast('Treino "' + w.name + '" adicionado às suas fichas!', 'ok', 'check');
+}
+
+/* Compartilhar Ficha de Treino com Amigos (Código / WhatsApp) */
+function shareWorkoutRoutine(id){
+  const w = state.workouts.find(function(x){ return x.id === id; });
+  if(!w) return;
+  const clean = {
+    name: w.name,
+    split: w.split || 'Livre',
+    ex: w.ex.map(function(e){
+      const lib = libById(e.exId);
+      return {
+        name: lib ? lib.name : 'Exercício',
+        group: lib ? lib.group : 'Peito',
+        equip: lib ? lib.equip : 'Livre',
+        rpe: e.rpe || 8,
+        rest: e.rest || 90,
+        sets: (e.sets || []).map(function(s){ return { type: s.type || 'work', reps: s.reps || 10 }; })
+      };
+    })
+  };
+  const jsonStr = JSON.stringify(clean);
+  const code = 'FORJA:' + btoa(unescape(encodeURIComponent(jsonStr)));
+  const text = '⚡ Ficha FORJA: ' + w.name + ' (' + w.ex.length + ' exercícios)\n' +
+    'Divisão: ' + (w.split || 'Livre') + '\n\n' +
+    'Código para importar no app:\n' + code;
+
+  if(navigator.share){
+    navigator.share({ title: 'Ficha FORJA - ' + w.name, text: text }).catch(function(){});
+  } else if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(function(){
+      toast('Código da ficha copiado! Envie para seus amigos.', 'ok', 'copy');
+    }).catch(function(){
+      openRoutineShareModal(w.name, code);
+    });
+  } else {
+    openRoutineShareModal(w.name, code);
+  }
+}
+
+function openRoutineShareModal(title, code){
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="rowline"><div class="h-display h2">COMPARTILHAR FICHA</div>' +
+    '<div style="color:var(--acc)">' + icon('share') + '</div></div>' +
+    '<p class="mut mt8" style="font-size:13.5px">Copie o código abaixo e envie para seus amigos importarem no FORJA:</p>' +
+    '<textarea class="fld mt14" style="min-height:90px;font-family:monospace;font-size:12px" readonly>' + esc(code) + '</textarea>' +
+    '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="modal-close">' + icon('check') + ' Fechar</button>'
+  );
+}
+
+function openImportWorkoutModal(){
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="rowline"><div class="h-display h2">IMPORTAR FICHA</div>' +
+    '<div style="color:var(--acc)">' + icon('download') + '</div></div>' +
+    '<p class="mut mt8" style="font-size:13px;line-height:1.5">' +
+    'Cole abaixo o código de ficha compartilhado por um amigo (começa com FORJA:...):</p>' +
+    '<textarea class="fld mt14" id="import-code-inp" placeholder="Cole o código FORJA:... aqui" style="min-height:95px"></textarea>' +
+    '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="w-import-apply">' + icon('check') + ' Importar Ficha Agora</button>'
+  );
+}
+
+function applyWorkoutImport(){
+  const inp = document.getElementById('import-code-inp');
+  let raw = (inp ? inp.value : '').trim();
+  if(!raw) return toast('Cole o código da ficha para importar.', 'bad');
+  if(raw.includes('FORJA:')) raw = raw.split('FORJA:')[1].trim().split(/\s+/)[0];
+  try{
+    const jsonStr = decodeURIComponent(escape(atob(raw)));
+    const data = JSON.parse(jsonStr);
+    if(!data.name || !Array.isArray(data.ex)) throw new Error('invalid');
+    const newW = {
+      id: uid(),
+      name: data.name,
+      split: data.split || 'Livre',
+      ex: data.ex.map(function(item){
+        const lib = matchExercise(item.name, item.group);
+        return {
+          exId: lib.id,
+          rpe: item.rpe || 8,
+          rest: item.rest || 90,
+          sets: (item.sets || []).map(function(s){ return { type: s.type || 'work', reps: s.reps || 10, w: '' }; })
+        };
+      })
+    };
+    state.workouts.push(newW);
+    save();
+    closeModal();
+    RENDER.workouts();
+    toast('Ficha "' + newW.name + '" importada com sucesso!', 'ok', 'check');
+  }catch(err){
+    toast('Código de ficha inválido ou corrompido.', 'bad');
+  }
 }
