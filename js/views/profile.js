@@ -2,7 +2,7 @@ RENDER.profile = function(){
   const u = state.user, li = levelInfo(u.xp);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const accName = session ? (session.name || session.email || 'Conta') : 'Convidado';
-  const accMode = !session ? 'Modo Convidado (Offline)' : session.mode === 'google' ? 'Conta Google Conectada' : session.mode === 'firebase' ? 'Google / Firebase Nuvem' : 'Conta Local';
+  const accMode = !session ? 'Modo Convidado (Offline)' : session.mode === 'supabase' ? 'Supabase Cloud (Sincronizado)' : session.mode === 'google' ? 'Conta Google Conectada' : session.mode === 'firebase' ? 'Google / Firebase Nuvem' : 'Conta Local';
   document.querySelector('.view[data-view="profile"]').innerHTML =
     '<div class="eyebrow rise">Atleta</div><div class="h-display h1 mt8 rise" style="--d:60ms">' + esc(u.name || 'PERFIL').toUpperCase() + '</div>' +
     '<div class="card mt20 rise" style="--d:90ms"><div class="rowline"><div>' +
@@ -13,13 +13,15 @@ RENDER.profile = function(){
     '<div class="card mt8 rise" style="--d:130ms">' +
     '<div class="kv"><span class="mut">Sessão</span><b style="font-size:13.5px">' + esc(accName) + '</b></div>' +
     '<div class="kv"><span class="mut">Tipo</span><b style="font-size:13.5px">' + esc(accMode) + '</b></div>' +
+    '<div class="kv"><span class="mut">Supabase Cloud</span><b style="font-size:13.5px;color:var(--ok)">Conectado (janbrprcrbjseutnxiko)</b></div>' +
     '<div class="kv"><span class="mut">Gemini IA</span><b style="font-size:13.5px;color:' + (state.settings.gemini?'var(--ok)':'var(--dim)') + '">' + (state.settings.gemini?'conectado':'não configurado') + '</b></div>' +
     '<div class="kv"><span class="mut">Strava</span><b style="font-size:13.5px;color:' + (state.settings.strava?'var(--ok)':'var(--dim)') + '">' + (state.settings.strava?'conectado':'não configurado') + '</b></div>' +
     '<div class="stack mt14">' +
+    '<button class="btn btn-pri ripple" style="width:100%" data-act="sb-sync">' + icon('cloud') + ' Sincronizar com Supabase Cloud</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="sb-set">' + icon('sync') + ' Configurações Supabase Cloud</button>' +
     '<button class="btn btn-ghost ripple" style="width:100%" data-act="gem-set">' + icon('brain') + ' Chave Gemini (IA)</button>' +
     '<button class="btn btn-ghost ripple" style="width:100%" data-act="strava-set">' + icon('bolt2') + ' Strava</button>' +
-    '<button class="btn btn-ghost ripple" style="width:100%" data-act="fb-set">' + icon('cloud') + (getFbCfg() ? ' Firebase configurado' : ' Login com Google (Firebase)') + '</button>' +
-    (session && session.mode === 'firebase' ? '<button class="btn btn-ghost ripple" style="width:100%" data-act="acc-sync">' + icon('sync') + ' Sincronizar com a nuvem</button>' : '') +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="fb-set">' + icon('cloud') + (getFbCfg() ? ' Firebase configurado' : ' Firebase Opcional') + '</button>' +
     (session ? '<button class="btn btn-danger ripple" style="width:100%" data-act="logout">' + icon('logout') + ' Sair da conta</button>' : '') +
     '</div></div>' +
     '<div class="card mt14 rise" style="--d:160ms">' +
@@ -116,6 +118,23 @@ function openStravaSettings(){
     '<p class="dim mt8" style="font-size:11.5px;line-height:1.5">Se o Strava bloquear a publicação direta do navegador, o FORJA abre a folha de compartilhamento nativa como alternativa.</p>' +
     '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="strava-save">Salvar conexão</button>');
 }
+function openSupabaseSettings(){
+  const cfg = getSupabaseConfig();
+  modalHTML('<div class="sheet-grip"></div><div class="h-display h2">SUPABASE CLOUD</div>' +
+    '<p class="mut mt8" style="font-size:13px;line-height:1.6">Seu banco de dados relacional Supabase armazena treinos, histórico de cargas, feed e sincronização entre aparelhos com segurança.</p>' +
+    '<label class="flabel lbl mt14">URL do Projeto</label>' +
+    '<input class="fld" id="sb-url" placeholder="https://xyz.supabase.co" value="' + esc(cfg.url) + '">' +
+    '<label class="flabel lbl mt14">Chave Anon / Publishable</label>' +
+    '<input class="fld" id="sb-key" type="password" placeholder="eyJ..." value="' + esc(cfg.anonKey) + '">' +
+    '<div class="card mt14" style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)">' +
+    '<div class="rowline" style="gap:10px">' +
+    '<div style="color:var(--acc)">' + icon('shield') + '</div>' +
+    '<span class="dim" style="font-size:11.5px">Projeto vinculado: <b>janbrprcrbjseutnxiko</b>. Chave de serviço protegida com segurança no servidor.</span>' +
+    '</div></div>' +
+    '<div class="split2 mt20"><button class="btn btn-ghost ripple" data-act="sb-reset-cfg">Restaurar Padrão</button>' +
+    '<button class="btn btn-pri ripple" data-act="sb-save-cfg">Salvar e Conectar</button></div>');
+}
+
 function openFbSettings(){
   modalHTML('<div class="sheet-grip"></div><div class="h-display h2">FIREBASE (GOOGLE + NUVEM)</div>' +
     '<p class="mut mt8" style="font-size:13px;line-height:1.6">Habilita login com Google, recuperação de senha por e-mail, sincronização entre aparelhos e feed da comunidade. No console do Firebase: crie um projeto, ative Authentication (Google + E-mail/senha), adicione um app web e cole o firebaseConfig abaixo.</p>' +

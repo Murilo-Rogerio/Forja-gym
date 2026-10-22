@@ -1,8 +1,8 @@
-const CACHE = 'forja-v4-hevy-plus';
+const CACHE = 'forja-v5-supabase';
 const ASSETS = [
   './', './index.html', './manifest.json', './icons/icon.svg',
   './css/tokens.css', './css/base.css', './css/components.css',
-  './js/lib/utils.js', './js/lib/data.js', './js/lib/state.js',
+  './js/lib/utils.js', './js/lib/data.js', './js/lib/supabase.js', './js/lib/state.js',
   './js/lib/gamification.js', './js/lib/ai.js',
   './js/components/icons.js', './js/components/fx.js', './js/components/toast.js',
   './js/components/timer.js', './js/components/charts.js', './js/components/bodymap.js',
@@ -23,7 +23,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return; // Gemini/Firebase/Strava: direto à rede
+  if (url.origin !== location.origin) return; // Supabase/Gemini/Firebase/Strava: direto à rede
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const cp = res.clone();

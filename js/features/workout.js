@@ -408,6 +408,7 @@ function finishSession(){
 
   const news = checkAchievements(false);
   save();
+  if(typeof sbSyncLogs === 'function' && session && session.mode === 'supabase'){ sbSyncLogs(); sbSyncProfile(); }
   openReport(log, xpEarned, beforeLvl, prList, news);
 }
 

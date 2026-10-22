@@ -54,5 +54,5 @@ RENDER.feed = function(){
     (merged.length ? merged.map(postCardHTML).join('') : emptyState) +
     '</div>';
 
-  if(FB) fbFeedPull();
+  if(typeof fbFeedPull === 'function') fbFeedPull();
 };

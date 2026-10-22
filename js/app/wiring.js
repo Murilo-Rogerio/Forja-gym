@@ -26,8 +26,15 @@ const ACTIONS = {
     if(!w) return;
     modalConfirm({ title:'Excluir ficha', msg:'"' + w.name + '" será removida. O histórico é mantido.', ok:'Excluir', danger:true })
       .then(function(yes){
-        if(yes){ state.workouts = state.workouts.filter(function(x){ return x.id !== d.arg; });
-          save(); toast('Ficha excluída.', 'ok'); RENDER.workouts(); }
+        if(yes){
+          state.workouts = state.workouts.filter(function(x){ return x.id !== d.arg; });
+          save();
+          if(typeof sbGetClient === 'function' && session && session.uid){
+            try{ const client = sbGetClient(); if(client) client.from('workouts').delete().eq('id', d.arg).eq('user_id', session.uid); }catch(e){}
+          }
+          toast('Ficha excluída.', 'ok');
+          RENDER.workouts();
+        }
       });
   },
   'w-start': function(d){ startSession(d.arg); },
@@ -73,6 +80,9 @@ const ACTIONS = {
     } else state.workouts.push(JSON.parse(JSON.stringify(editing)));
     save(); editing = null;
     if(editorEl){ closeScreen(editorEl); editorEl = null; }
+    if(typeof sbSyncWorkouts === 'function' && session && session.mode === 'supabase'){
+      sbSyncWorkouts();
+    }
     toast('Ficha salva.', 'ok'); RENDER.workouts();
   },
   'ed-ex-del': function(d){ editing.ex.splice(+d.arg, 1); renderEditorInto(editorEl); },
@@ -304,6 +314,23 @@ const ACTIONS = {
     toast(state.settings.strava ? 'Strava conectado.' : 'Strava desconectado.', 'ok');
     if(RENDER[curView]) RENDER[curView]();
   },
+  'sb-sync': function(){ if(typeof sbSyncAll === 'function') sbSyncAll(true); },
+  'sb-set': function(){ if(typeof openSupabaseSettings === 'function') openSupabaseSettings(); },
+  'sb-save-cfg': function(){
+    const url = (document.getElementById('sb-url').value || '').trim();
+    const key = (document.getElementById('sb-key').value || '').trim();
+    if(!url || !key){ toast('Preencha a URL e a Chave.', 'bad'); return; }
+    saveSupabaseConfig({ url: url, anonKey: key });
+    closeModal();
+    toast('Configurações do Supabase salvas!', 'ok', 'cloud');
+    if(RENDER[curView]) RENDER[curView]();
+  },
+  'sb-reset-cfg': function(){
+    saveSupabaseConfig(null);
+    closeModal();
+    toast('Configurações padrão do Supabase restauradas.', 'ok');
+    if(RENDER[curView]) RENDER[curView]();
+  },
   'fb-set': function(){ openFbSettings(); },
   'fb-save': function(){
     try{
@@ -399,15 +426,27 @@ const ACTIONS = {
     const p = state.posts.find(function(x){ return x.id === d.arg; }) ||
       remoteFeedCache.find(function(x){ return x.id === d.arg; });
     if(!p) return;
+    const wasLiked = Boolean(p.liked);
     p.liked = !p.liked;
     p.likes = Math.max(0, (p.likes||0) + (p.liked ? 1 : -1));
     save();
     if(p.liked){ buzz([30]); }
+    if(typeof sbToggleLike === 'function' && session && session.mode === 'supabase'){
+      sbToggleLike(d.arg, wasLiked);
+    }
     RENDER.feed();
   },
   'post-del': function(d){
     state.posts = state.posts.filter(function(x){ return x.id !== d.arg; });
-    save(); RENDER.feed();
+    remoteFeedCache = remoteFeedCache.filter(function(x){ return x.id !== d.arg; });
+    save();
+    if(typeof sbGetClient === 'function' && session && session.uid){
+      try{
+        const client = sbGetClient();
+        if(client) client.from('feed_posts').delete().eq('id', d.arg).eq('user_id', session.uid);
+      }catch(e){}
+    }
+    RENDER.feed();
     toast('Post removido.', 'ok');
   },
   'feed-new': function(){ openComposer(null); },

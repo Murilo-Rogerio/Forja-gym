@@ -7,6 +7,7 @@ files = glob.glob('js/**/*.js', recursive=True)
 load_order = [
   'js/lib/utils.js',
   'js/lib/data.js',
+  'js/lib/supabase.js',
   'js/components/icons.js',
   'js/lib/state.js',
   'js/app/router.js',
@@ -62,6 +63,7 @@ expected = [
   'openEditorAIAssistant', 'runEditorAIGeneration', 'applyAISuggestions',
   'runNutritionAIAnalysis', 'saveLastAnalysisToDiary', 'processInstantGoogleLogin',
   'aiSuggestForWorkout', 'analyzeMealWithAI', 'localEstimateMeal',
+  'sbGetClient', 'sbSignUp', 'sbSignIn', 'sbSignInWithGoogle', 'sbSyncAll', 'sbPushPost', 'sbPullFeed',
   'fbPostPush', 'fbFeedPull', 'bodyMapHTML', 'groupsLegendHTML',
   'stravaPost', 'celebrate', 'toast', 'modalHTML', 'modalConfirm',
   'Timer', 'levelInfo', 'checkAchievements'

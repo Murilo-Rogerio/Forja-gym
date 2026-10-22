@@ -44,14 +44,14 @@ function renderAuth(){
       '<button class="btn btn-sm ripple" style="color:var(--acc)" data-act="auth-mode" data-arg="login">Fazer Login</button></div>';
   } else if(authMode === 'forgot'){
     form =
-      '<p class="mut" style="font-size:13px;line-height:1.5;margin-bottom:14px">Digite o e-mail cadastrado para enviarmos o código de recuperação de senha.</p>' +
+      '<p class="mut" style="font-size:13px;line-height:1.5;margin-bottom:14px">Digite seu e-mail cadastrado para redefinir o acesso.</p>' +
       '<label class="flabel lbl">E-mail da conta</label>' +
       '<input class="fld" id="au-email" type="email" inputmode="email" placeholder="voce@email.com">' +
-      '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="auth-submit">' + icon('key') + ' Enviar Código de Recuperação</button>' +
+      '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="auth-submit">' + icon('key') + ' Enviar Link de Recuperação</button>' +
       '<div class="rowline mt20"><button class="btn btn-sm ripple" style="color:var(--mut)" data-act="auth-mode" data-arg="login">Voltar ao login</button>' +
       '<button class="btn btn-sm ripple" style="color:var(--acc)" data-act="auth-mode" data-arg="reset">Já tenho um código</button></div>';
   } else {
-    // Reset de senha
+    // Reset de senha local
     form =
       '<label class="flabel lbl">E-mail</label>' +
       '<input class="fld" id="au-email" type="email" placeholder="voce@email.com">' +
@@ -82,6 +82,10 @@ function renderAuth(){
     '<div class="rowline" style="justify-content:center">' +
     '<button class="btn btn-sm ripple" style="color:var(--dim);font-size:12.5px" data-act="auth-guest">' + icon('dumbbell') + ' Explorar sem conta (Modo Offline)</button>' +
     '</div></div>' +
+    '<div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:var(--dim);margin-top:14px">' +
+    '<span style="width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)"></span>' +
+    '<span>Nuvem Supabase Ativa · Sincronização em tempo real</span>' +
+    '</div>' +
     '</div></div>';
 }
 
@@ -117,6 +121,29 @@ async function authSubmit(){
       const pw = document.getElementById('au-pass').value || '';
       if(!email || !pw) return auErr('Preencha seu e-mail e senha.');
 
+      // 1. Tenta autenticação via Supabase Cloud
+      if(typeof sbSignIn === 'function' && sbIsAvailable()){
+        const sbRes = await sbSignIn(email, pw);
+        if(!sbRes.error && sbRes.data && sbRes.data.user){
+          await afterSbLogin(sbRes.data.user, sbRes.data.session);
+          return;
+        }
+        if(sbRes.error && sbRes.error.message){
+          const msg = sbRes.error.message.toLowerCase();
+          if(msg.includes('invalid login credentials') || msg.includes('email not confirmed') || msg.includes('invalid email')){
+            const accs = getAccounts();
+            if(!accs[email]){
+              authBusy = false;
+              if(msg.includes('email not confirmed')){
+                return auErr('E-mail não confirmado no Supabase. Verifique sua caixa de entrada.');
+              }
+              return auErr('E-mail ou senha incorretos.');
+            }
+          }
+        }
+      }
+
+      // 2. Fallback Firebase (se configurado)
       if(getFbCfg()){
         const fb = await fbInit();
         if(fb){
@@ -134,6 +161,7 @@ async function authSubmit(){
         }
       }
 
+      // 3. Fallback Conta Local
       const accs = getAccounts();
       const acc = accs[email];
       if(!acc) return auErr('Conta não encontrada. Crie uma conta ou use o Google.');
@@ -154,6 +182,28 @@ async function authSubmit(){
       if(pw.length < 6) return auErr('A senha deve ter no mínimo 6 caracteres.');
       if(pw !== pw2) return auErr('As senhas não coincidem.');
 
+      // 1. Tenta registro via Supabase Cloud
+      if(typeof sbSignUp === 'function' && sbIsAvailable()){
+        const sbRes = await sbSignUp(email, pw, name);
+        if(!sbRes.error && sbRes.data && sbRes.data.user){
+          if(sbRes.data.session){
+            await afterSbLogin(sbRes.data.user, sbRes.data.session, name);
+            return;
+          } else {
+            await afterSbPending(sbRes.data.user, name, email);
+            return;
+          }
+        }
+        if(sbRes.error && sbRes.error.message){
+          const m = sbRes.error.message.toLowerCase();
+          if(m.includes('already registered') || m.includes('user already exists')){
+            authBusy = false;
+            return auErr('Este e-mail já está cadastrado. Faça login.');
+          }
+        }
+      }
+
+      // 2. Fallback Firebase
       if(getFbCfg()){
         const fb = await fbInit();
         if(fb){
@@ -168,6 +218,7 @@ async function authSubmit(){
         }
       }
 
+      // 3. Fallback Conta Local
       const accs = getAccounts();
       if(accs[email]) return auErr('Este e-mail já está cadastrado.');
       const salt = uid();
@@ -186,6 +237,18 @@ async function authSubmit(){
       const email = (document.getElementById('au-email').value||'').trim().toLowerCase();
       if(!email || !email.includes('@')) return auErr('Digite um e-mail válido.');
 
+      // 1. Supabase Reset
+      if(typeof sbResetPassword === 'function' && sbIsAvailable()){
+        const sbRes = await sbResetPassword(email);
+        if(!sbRes.error){
+          toast('Link de redefinição enviado para seu e-mail!', 'ok', 'mail');
+          authMode = 'login';
+          renderAuth();
+          return;
+        }
+      }
+
+      // 2. Firebase Reset
       if(getFbCfg()){
         const fb = await fbInit();
         if(fb){
@@ -199,6 +262,7 @@ async function authSubmit(){
         }
       }
 
+      // 3. Código local
       const accs = getAccounts();
       const acc = accs[email];
       if(!acc) return auErr('Nenhuma conta encontrada com este e-mail.');
@@ -247,7 +311,16 @@ async function authSubmit(){
 
 /* Login Google Elegante e Flexível */
 async function googleLogin(){
-  // 1. Se o Firebase já estiver configurado com credenciais válidas, usa o popup oficial do Google
+  // 1. Tenta login direto via Supabase OAuth (Google)
+  if(typeof sbSignInWithGoogle === 'function' && sbIsAvailable()){
+    try{
+      const res = await sbSignInWithGoogle();
+      if(!res.error) return; // Browser será redirecionado para a tela de autenticação do Google
+      console.info('Aviso Supabase Google OAuth:', res.error && res.error.message);
+    }catch(e){}
+  }
+
+  // 2. Se o Firebase estiver configurado com credenciais válidas, usa o popup oficial do Google
   if(getFbCfg()){
     const fb = await fbInit();
     if(fb){
@@ -262,13 +335,13 @@ async function googleLogin(){
     }
   }
 
-  // 2. Se o Firebase ainda não foi configurado, abre a modal de Login Google Instantâneo
+  // 3. Modal de Login Google Instantâneo (Cloud / Híbrido)
   modalHTML(
     '<div class="sheet-grip"></div>' +
     '<div class="rowline"><div class="h-display h2">ENTRAR COM GOOGLE</div>' +
     '<div class="gmark">G</div></div>' +
     '<p class="mut mt8" style="font-size:13.5px;line-height:1.6">' +
-    'Conecte-se com sua conta Google para sincronizar seu histórico, conquistas e fotos no feed.</p>' +
+    'Conecte-se com sua identidade Google para sincronizar seu histórico, conquistas e fotos no feed da Forja.</p>' +
     '<div class="card mt14">' +
     '<label class="flabel lbl">Seu Nome Google</label>' +
     '<input class="fld" id="g-login-name" placeholder="Ex.: Murilo Carvalho" value="' + esc(state && state.user && state.user.name ? state.user.name : '') + '">' +
@@ -277,11 +350,12 @@ async function googleLogin(){
     '<button class="btn btn-pri ripple mt20" style="width:100%" data-act="google-instant-login">' +
     icon('check') + ' Confirmar e Entrar com Google</button>' +
     '</div>' +
-    '<div class="mt14">' +
-    '<p class="dim" style="font-size:12px;line-height:1.5">' +
-    'Deseja sincronização remota via Firebase Cloud? Você pode conectar seu projeto Firebase em ' +
-    '<b>Perfil → Conexões</b> a qualquer momento.</p>' +
-    '</div>'
+    '<div class="card mt14" style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.25)">' +
+    '<div class="rowline" style="gap:10px;align-items:flex-start">' +
+    '<div style="color:var(--acc);margin-top:2px">' + icon('bolt2') + '</div>' +
+    '<p class="dim" style="font-size:12px;line-height:1.5;margin:0">' +
+    'Nuvem Supabase já está integrada no app! Para ativar o login popup nativo de 1-clique com a conta Google, basta habilitar o provedor Google no Console do Supabase em <b>Authentication → Providers → Google</b>.</p>' +
+    '</div></div>'
   );
 }
 
@@ -296,10 +370,34 @@ function processInstantGoogleLogin(){
   setSession({ mode:'google', email: email, name: name, uid: uidClean });
   migrateGuestInto();
   load();
-  if(!state.user.name) state.user.name = name;
+  if(!state.user.name || state.user.name === 'Atleta') state.user.name = name;
   save();
   enterApp();
   toast('Conectado via Google como ' + name + '!', 'ok', 'flame');
+  if(typeof sbSyncProfile === 'function') sbSyncProfile();
+}
+
+async function afterSbLogin(user, sessionData, nameOverride){
+  const name = nameOverride || (user.user_metadata && user.user_metadata.name) || (user.email ? user.email.split('@')[0] : 'Atleta');
+  setSession({ mode:'supabase', uid: user.id, email: user.email || '', name: name });
+  migrateGuestInto();
+  load();
+  if(!state.user.name || state.user.name === 'Atleta') state.user.name = name;
+  save();
+  enterApp();
+  toast('Conectado à nuvem Supabase como ' + name + '!', 'ok', 'flame');
+  if(typeof sbSyncAll === 'function') sbSyncAll(false);
+}
+
+async function afterSbPending(user, name, email){
+  setSession({ mode:'supabase', uid: user.id, email: email, name: name, pendingConfirm: true });
+  migrateGuestInto();
+  load();
+  state.user.name = name;
+  save();
+  enterApp();
+  toast('Conta criada! Enviamos um link de confirmação para ' + email + '.', 'ok', 'mail');
+  if(typeof sbSyncProfile === 'function') sbSyncProfile();
 }
 
 async function afterFbLogin(user, nameOverride){
@@ -318,7 +416,7 @@ async function afterFbLogin(user, nameOverride){
 function enterApp(){
   if(authEl){ authEl.remove(); authEl = null; }
   load();
-  if(session && session.name && !state.user.name) state.user.name = session.name;
+  if(session && session.name && (!state.user.name || state.user.name === 'Atleta')) state.user.name = session.name;
   setTabbarIcons();
   go('home');
   if(!state.user.name) openOnboarding();

@@ -207,6 +207,22 @@ window.addEventListener('resize', function(){
 window.addEventListener('beforeunload', function(){ if(active){ state.active = active; save(); } });
 
 (function boot(){
+  // 1. Detecta redirecionamento de autenticação OAuth (Google/Supabase)
+  if(typeof window !== 'undefined' && location.hash && location.hash.includes('access_token')){
+    const client = typeof sbGetClient === 'function' ? sbGetClient() : null;
+    if(client){
+      client.auth.getSession().then(function(res){
+        if(res && res.data && res.data.session && res.data.session.user){
+          const u = res.data.session.user;
+          const name = (u.user_metadata && u.user_metadata.name) || u.email.split('@')[0];
+          setSession({ mode:'supabase', uid: u.id, email: u.email, name: name });
+          try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+          location.reload();
+        }
+      }).catch(function(){});
+    }
+  }
+
   session = getSession();
   if(session){
     load();
@@ -225,7 +241,12 @@ window.addEventListener('beforeunload', function(){ if(active){ state.active = a
     }
     checkAchievements(true);
     save();
-    if(session.mode === 'firebase') fbInit().then(function(){ if(FB) fbSyncBestEffort(); });
+    if(session.mode === 'supabase'){
+      if(typeof sbInitRealtimeFeed === 'function') sbInitRealtimeFeed();
+      if(typeof sbSyncAll === 'function') sbSyncAll(false);
+    } else if(session.mode === 'firebase'){
+      fbInit().then(function(){ if(FB) fbSyncBestEffort(); });
+    }
   } else {
     setTabbarIcons();
     renderAuth();

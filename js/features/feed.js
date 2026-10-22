@@ -110,7 +110,8 @@ function sendPost(){
 
   state.posts.unshift(post);
   save();
-  fbPostPush(post);
+  if(typeof sbPushPost === 'function' && session && session.mode === 'supabase') sbPushPost(post);
+  else fbPostPush(post);
 
   const sc = document.getElementById('stack').lastElementChild;
   if(sc) sc.remove();
@@ -156,6 +157,18 @@ async function fbPostPush(post){
 }
 
 async function fbFeedPull(){
+  if(typeof sbPullFeed === 'function' && sbIsAvailable()){
+    try{
+      const remote = await sbPullFeed();
+      if(remote && remote.length){
+        remoteFeedCache = remote;
+        if(curView === 'feed' && RENDER.feed) RENDER.feed();
+        return;
+      }
+    }catch(err){
+      console.warn('Erro ao carregar feed Supabase:', err);
+    }
+  }
   if(!FB || !session || session.mode !== 'firebase') return;
   try{
     const col = FB.f.collection(FB.db, 'forjaFeed');

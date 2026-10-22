@@ -47,9 +47,13 @@
   <canvas id="fx"></canvas>
 </div>
 
-<!-- ordem de carregamento = ordem de dependência (escopo global compartilhado) -->
+<!-- SDK Supabase (com fallback offline automático) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Ordem de carregamento = ordem de dependência (escopo global compartilhado) -->
 <script src="js/lib/utils.js"></script>
 <script src="js/lib/data.js"></script>
+<script src="js/lib/supabase.js"></script>
 <script src="js/components/icons.js"></script>
 <script src="js/lib/state.js"></script>
 <script src="js/app/router.js"></script>
