@@ -5,6 +5,7 @@ const ACTIONS = {
   'auth-mode': function(d){ authMode = d.arg; renderAuth(); },
   'auth-submit': function(){ authSubmit(); },
   'auth-google': function(){ googleLogin(); },
+  'google-instant-login': function(){ processInstantGoogleLogin(); },
   'auth-guest': function(){ setSession({ mode:'guest' }); enterApp(); },
   'auth-eye': function(){ const p = document.getElementById('au-pass'); if(p) p.type = p.type === 'password' ? 'text' : 'password'; },
 
@@ -27,6 +28,9 @@ const ACTIONS = {
   'ai-open': function(){ openAIScreen(); },
   'ai-gen': function(){ aiGenerate(); },
   'ai-saveplan': function(){ aiSavePlan(); },
+  'ed-ai-open': function(){ openEditorAIAssistant(); },
+  'ed-ai-generate': function(){ runEditorAIGeneration(); },
+  'ed-ai-apply': function(){ applyAISuggestions(); },
 
   'ed-split': function(d){ editing.split = d.arg; renderEditorInto(editorEl); },
   'ed-add': function(){ browseLibrary(true); },
@@ -118,9 +122,21 @@ const ACTIONS = {
   'lib-new-save': function(){
     const name = document.getElementById('lc-name').value.trim();
     if(!name){ toast('Dê um nome ao exercício.', 'bad'); return; }
-    state.library.push({ id:'ex-c-'+uid(), name: name, group: document.getElementById('lc-group').value, custom: true });
-    save(); closeModal(); renderLibList();
-    toast('Exercício criado na biblioteca.', 'ok');
+    const group = document.getElementById('lc-group').value;
+    const newEx = { id:'ex-c-'+uid(), name: name, group: group, custom: true };
+    state.library.push(newEx);
+    save();
+    closeModal();
+    renderLibList();
+    if(libSelect && editing){
+      editing.ex.push({ exId: newEx.id, rpe: 8, rest: 90, sets: [{ type:'work', reps: 10 }] });
+      const sc = document.getElementById('stack').lastElementChild;
+      if(sc) closeScreen(sc);
+      if(editorEl) renderEditorInto(editorEl);
+      toast('Exercício "' + name + '" criado e adicionado à ficha!', 'ok');
+    } else {
+      toast('Exercício criado na biblioteca.', 'ok');
+    }
   },
 
   'ac-toggle-set': function(d){
@@ -318,6 +334,28 @@ const ACTIONS = {
       ? (state.nutrition.custom || (auto ? { p:auto.p, c:auto.c, f:auto.f } : { p:150, c:200, f:60 }))
       : null;
     save(); RENDER.nutrition();
+  },
+  'nutr-ai-analyze': function(){ runNutritionAIAnalysis(); },
+  'nutr-meal-save': function(){ saveLastAnalysisToDiary(); },
+  'nutr-chip': function(d){
+    const inp = document.getElementById('nutr-ai-input');
+    if(inp){ inp.value = d.arg; runNutritionAIAnalysis(); }
+  },
+  'nutr-meal-del': function(d){
+    state.nutrition.meals = (state.nutrition.meals||[]).filter(function(m){ return m.id !== d.arg; });
+    save(); RENDER.nutrition();
+    toast('Refeição removida do diário.', 'ok');
+  },
+  'nutr-meals-clear': function(){
+    modalConfirm({ title:'Limpar refeições de hoje', msg:'Deseja zerar as refeições consumidas hoje?', ok:'Limpar' })
+      .then(function(yes){
+        if(yes){
+          const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+          state.nutrition.meals = (state.nutrition.meals||[]).filter(function(m){ return m.at < startOfDay.getTime(); });
+          save(); RENDER.nutrition();
+          toast('Diário de hoje zerado.', 'ok');
+        }
+      });
   }
 };
 

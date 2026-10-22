@@ -1,4 +1,4 @@
-const CACHE = 'forja-multi-v1';
+const CACHE = 'forja-v2-complete';
 const ASSETS = [
   './', './index.html', './manifest.json', './icons/icon.svg',
   './css/tokens.css', './css/base.css', './css/components.css',

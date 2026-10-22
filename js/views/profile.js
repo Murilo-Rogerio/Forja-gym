@@ -2,7 +2,7 @@ RENDER.profile = function(){
   const u = state.user, li = levelInfo(u.xp);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const accName = session ? (session.name || session.email || 'Conta') : 'Convidado';
-  const accMode = !session ? 'modo convidado' : session.mode === 'firebase' ? 'conta Google/Firebase' : 'conta local';
+  const accMode = !session ? 'Modo Convidado (Offline)' : session.mode === 'google' ? 'Conta Google Conectada' : session.mode === 'firebase' ? 'Google / Firebase Nuvem' : 'Conta Local';
   document.querySelector('.view[data-view="profile"]').innerHTML =
     '<div class="eyebrow rise">Atleta</div><div class="h-display h1 mt8 rise" style="--d:60ms">' + esc(u.name || 'PERFIL').toUpperCase() + '</div>' +
     '<div class="card mt20 rise" style="--d:90ms"><div class="rowline"><div>' +

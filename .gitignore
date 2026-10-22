@@ -1,0 +1,11 @@
+# Ambientes e logs
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Node / dependências (se aplicável)
+node_modules/
+dist/
+build/
