@@ -102,11 +102,13 @@ function renderActiveInto(el){
         '<div class="setfield">' +
         '<button data-act="ac-adj" data-arg="w:' + i + ':' + j + ':-1" aria-label="Menos carga">' + icon('minus') + '</button>' +
         '<input type="number" inputmode="decimal" step="2.5" min="0" placeholder="kg" value="' + s.w + '" data-inp="set-w" data-ex="' + i + '" data-set="' + j + '">' +
-        '<span>kg</span></div><span class="xmark">×</span>' +
+        '<button data-act="ac-adj" data-arg="w:' + i + ':' + j + ':1" aria-label="Mais carga">' + icon('plus') + '</button>' +
+        '</div><span class="xmark">×</span>' +
         '<div class="setfield">' +
         '<button data-act="ac-adj" data-arg="r:' + i + ':' + j + ':-1" aria-label="Menos reps">' + icon('minus') + '</button>' +
         '<input type="number" inputmode="numeric" step="1" min="0" placeholder="reps" value="' + s.r + '" data-inp="set-r" data-ex="' + i + '" data-set="' + j + '">' +
-        '<span>rep</span></div>' +
+        '<button data-act="ac-adj" data-arg="r:' + i + ':' + j + ':1" aria-label="Mais reps">' + icon('plus') + '</button>' +
+        '</div>' +
         '<button class="setchk ' + (s.done ? 'on' : '') + '" data-act="ac-toggle-set" data-arg="' + i + ':' + j + '" aria-label="Concluir série">' +
         '<svg class="ic" viewBox="0 0 24 24"><path class="p" d="M5 12.5l4.5 4.5L19 7"/></svg></button>' +
         '</div>';

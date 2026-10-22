@@ -37,8 +37,7 @@ RENDER.profile = function(){
     '<p class="mut" style="font-size:13px;line-height:1.6">FORJA roda 100% offline — seus dados ficam no aparelho. Instale na tela inicial para experiência de app nativo.</p>' +
     '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="install" id="install-btn">' + icon('download') + ' Instalar na tela inicial</button>' +
     (isIOS ? '<p class="dim mt8" style="font-size:12px">No iOS: toque em <b>Compartilhar</b> e depois <b>Adicionar à Tela de Início</b>.</p>' : '') + '</div>' +
-    (state.demo ? '<p class="dim mt14" style="font-size:12px;line-height:1.6">Os dados incluem o histórico de demonstração do primeiro acesso. Use "Apagar tudo" para começar do zero.</p>' : '') +
-    '<button class="btn btn-danger ripple mt20" style="width:100%" data-act="reset-data">' + icon('trash') + ' Apagar todos os dados</button>' +
+    '<button class="btn btn-danger ripple mt20" style="width:100%" data-act="reset-data">' + icon('trash') + ' Limpar e Reiniciar Dados</button>' +
     '<p class="dim mt14" style="text-align:center;font-family:var(--fd);letter-spacing:2px;font-size:12px">FORJA · TREINO & PERFORMANCE</p>';
   const btn = document.getElementById('install-btn');
   if(btn && !deferredPrompt && !isIOS) btn.style.display = 'none';

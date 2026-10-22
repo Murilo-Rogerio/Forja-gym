@@ -3,7 +3,7 @@ let state = null, session = null, FB = null, active = null;
 
 function defaultState(){
   return {
-    v: 3,
+    v: 4,
     user: { name:'', sex:'m', age:'', weight:'', height:'', activity:'moderado', goal:'manter', xp:0, avatar:'', createdAt:Date.now() },
     workouts: [],
     library: LIB.map(function(l){ return Object.assign({}, l); }),
@@ -62,6 +62,20 @@ function migrateState(s){
       }
     });
     s.v = 3;
+  }
+
+  // Versão 4: Remoção completa de dados de exemplo/demonstração.
+  // Zera qualquer histórico fabricado anterior para manter o app 100% autêntico e funcional.
+  if(s.v < 4 || s.demo){
+    if(s.demo){
+      s.logs = [];
+      s.records = {};
+      s.ach = {};
+      s.user.xp = 0;
+      s.posts = [];
+      s.demo = false;
+    }
+    s.v = 4;
   }
 
   s.settings = Object.assign({ sound:true, vibrate:true, gemini:'', strava:'', stravaAuto:false }, s.settings||{});

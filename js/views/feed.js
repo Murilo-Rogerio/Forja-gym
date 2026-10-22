@@ -7,6 +7,7 @@ function postCardHTML(p, idx){
     (p.w.groups||[]).slice(0,3).map(function(g){ return '<span class="chip" style="font-size:10px;padding:3px 8px">' + esc(g) + '</span>'; }).join('') + '</div>' : '';
   const photo = p.photo ? '<img class="post-photo" src="' + esc(p.photo) + '" alt="Foto do treino" loading="lazy">' : '';
   const own = p.own;
+
   return '<div class="post rise" style="--d:' + (idx*60) + 'ms">' +
     '<div class="rowline" style="align-items:flex-start"><div style="display:flex;gap:11px;align-items:center">' +
     '<div class="avatar">' + av + '</div><div><b style="font-size:14.5px">' + esc(p.name) + '</b>' +
@@ -21,17 +22,30 @@ function postCardHTML(p, idx){
 }
 
 RENDER.feed = function(){
-  seedFeedDemo();
-  const merged = (remoteFeedCache || []).concat(state.posts.map(function(p){ p.own = true; return p; }))
+  const merged = (remoteFeedCache || []).concat((state.posts || []).map(function(p){ p.own = true; return p; }))
     .sort(function(a,b){ return b.at - a.at; });
+
+  const emptyState =
+    '<div class="card mt20 rise" style="text-align:center;padding:36px 20px">' +
+    '<div style="width:60px;height:60px;border-radius:18px;background:var(--acc-deep);color:var(--acc);margin:0 auto 16px;display:flex;align-items:center;justify-content:center">' +
+    icon('camera') + '</div>' +
+    '<b style="font-size:18px;font-family:var(--fd);letter-spacing:.5px;text-transform:uppercase">Seu Feed Está Pronto!</b>' +
+    '<p class="mut mt8" style="font-size:13.5px;line-height:1.6;max-width:340px;margin:8px auto">' +
+    'Finalize um treino na academia, tire uma foto do shape ou dos pesos e compartilhe sua evolução com a comunidade.</p>' +
+    '<div class="mt14" style="display:flex;gap:8px;justify-content:center">' +
+    '<button class="btn btn-pri ripple" data-act="feed-new">' + icon('plus') + ' Publicar Treino ou Foto</button>' +
+    '<button class="btn btn-ghost ripple" data-act="feed-friends">' + icon('users') + ' Amigos</button>' +
+    '</div></div>';
+
   document.querySelector('.view[data-view="feed"]').innerHTML =
     '<div class="rowline rise"><div><div class="eyebrow">Comunidade</div>' +
-    '<div class="h-display h1 mt8">FEED</div></div>' +
+    '<div class="h-display h1 mt8">FEED SOCIAL</div></div>' +
     '<div style="display:flex;gap:8px">' +
     '<button class="iconbtn ripple" data-act="feed-friends" aria-label="Amigos">' + icon('users') + '</button>' +
     '<button class="btn btn-pri btn-sm ripple" data-act="feed-new">' + icon('camera') + ' Publicar</button></div></div>' +
     '<div class="stack mt20">' +
-    (merged.length ? merged.map(postCardHTML).join('') : '<div class="empty">Nenhum post ainda. Conclua um treino e compartilhe.</div>') +
+    (merged.length ? merged.map(postCardHTML).join('') : emptyState) +
     '</div>';
+
   if(FB) fbFeedPull();
 };
