@@ -120,6 +120,9 @@ RENDER.nutrition = function(){
       '</div>' +
       '<button class="btn btn-pri ripple mt14" style="width:100%" data-act="nutr-ai-analyze" id="nutr-ai-btn">' +
       icon('spark') + ' Calcular Macros com IA</button>' +
+      '<label class="btn btn-ghost ripple mt10" style="width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">' +
+      icon('camera') + ' Escanear Prato com Câmera (IA Vision)' +
+      '<input type="file" accept="image/*" style="display:none" data-chg="nutr-scan-photo"></label>' +
       '<div id="nutr-ai-result" class="mt14"></div>' +
       '</div>';
   } else {
@@ -224,6 +227,17 @@ RENDER.nutrition = function(){
     '</div>' +
     loggingPanel +
     '</div>' +
+
+    // BANCO RÁPIDO DE ALIMENTOS
+    '<div class="mt20 rise">' +
+    '<div class="lbl">Adicionar Rápido (1-Toque)</div>' +
+    '<div class="rowline mt8" style="gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none">' +
+    '<button class="chip ripple tap" data-act="nutr-quick-add" data-arg="frango">🍗 Frango 150g (46g P)</button>' +
+    '<button class="chip ripple tap" data-act="nutr-quick-add" data-arg="ovos">🍳 3 Ovos (19g P)</button>' +
+    '<button class="chip ripple tap" data-act="nutr-quick-add" data-arg="arroz_feijao">🍚 Arroz + Feijão</button>' +
+    '<button class="chip ripple tap" data-act="nutr-quick-add" data-arg="whey">🥛 Whey 30g (24g P)</button>' +
+    '<button class="chip ripple tap" data-act="nutr-quick-add" data-arg="banana_aveia">🍌 Banana + Aveia</button>' +
+    '</div></div>' +
 
     // DIÁRIO DE REFEIÇÕES DE HOJE
     '<div class="mt24 rise" style="--d:170ms">' +
@@ -368,4 +382,87 @@ function saveManualMeal(){
   save();
   toast('Refeição "' + name + '" adicionada aos macros de hoje!', 'ok', 'check');
   RENDER.nutrition();
+}
+
+/* Adição rápida de alimentos padrão */
+function quickAddFood(type){
+  const foods = {
+    frango: { name: 'Peito de Frango Grelhado (150g)', kcal: 247, p: 46, c: 0, f: 5, fiber: 0, text: '150g filé de peito de frango grelhado' },
+    ovos: { name: '3 Ovos Cozidos / Mexidos', kcal: 225, p: 19, c: 2, f: 16, fiber: 0, text: '3 unidades de ovos inteiros' },
+    arroz_feijao: { name: 'Arroz Branco + Feijão Carioca (200g)', kcal: 270, p: 11, c: 52, f: 1.5, fiber: 8, text: '120g arroz + 80g feijão' },
+    whey: { name: 'Dose de Whey Protein (30g)', kcal: 120, p: 24, c: 3, f: 1.5, fiber: 0, text: '1 scoop de 30g com água' },
+    banana_aveia: { name: 'Banana Prata com Aveia em Flocos', kcal: 255, p: 6.5, c: 54, f: 3, fiber: 7, text: '1 banana + 40g aveia' }
+  };
+  const f = foods[type];
+  if(!f) return;
+  const meal = Object.assign({ id: uid(), at: Date.now() }, f);
+  state.nutrition.meals = state.nutrition.meals || [];
+  state.nutrition.meals.unshift(meal);
+  save();
+  buzz([25]);
+  toast('"' + f.name + '" adicionado aos macros!', 'ok', 'apple');
+  RENDER.nutrition();
+}
+
+/* Escaneamento e análise de foto de refeição */
+function handleMealPhotoUpload(file){
+  if(!file) return;
+  const reader = new FileReader();
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="rowline"><div class="h-display h2">VISÃO COMPUTACIONAL IA</div>' +
+    '<div style="color:var(--acc)">' + icon('camera') + '</div></div>' +
+    '<div class="card mt14" style="text-align:center;padding:24px 16px">' +
+    '<div style="width:50px;height:50px;border-radius:16px;background:var(--acc-deep);color:var(--acc);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">' +
+    icon('sync', 'spin') + '</div>' +
+    '<b style="font-size:16px">Escaneando Prato e Alimentos...</b>' +
+    '<p class="mut mt8" style="font-size:13px">Identificando porções, gramatura, macronutrientes e micronutrientes com Gemini Vision.</p>' +
+    '</div>'
+  );
+
+  reader.onload = async function(evt){
+    try{
+      const dataUrl = evt.target.result;
+      const base64 = dataUrl.split(',')[1];
+      const mime = file.type || 'image/jpeg';
+      const analysis = await analyzeMealPhotoWithAI(base64, mime);
+
+      modalHTML(
+        '<div class="sheet-grip"></div>' +
+        '<div class="rowline"><div class="h-display h2">PRATO ESCANEADO</div>' +
+        '<div style="color:var(--ok)">' + icon('check') + '</div></div>' +
+        '<div class="card acc mt14">' +
+        '<div class="rowline">' +
+        '<b style="font-size:16px;color:var(--acc)">' + esc(analysis.name) + '</b>' +
+        '<span class="num" style="font-size:22px;font-weight:700;color:#fff">' + fmtN(analysis.kcal) + ' kcal</span></div>' +
+        (analysis.items && analysis.items.length ?
+          '<div class="dim mt8" style="font-size:12px;line-height:1.5">Alimentos identificados: ' + esc(analysis.items.join(', ')) + '</div>' : '') +
+        '<div class="split3 mt14" style="text-align:center">' +
+        '<div style="background:rgba(56,189,248,.1);padding:10px;border-radius:10px"><b class="num" style="color:#38bdf8;font-size:18px">' + analysis.p + 'g</b><div class="dim mt8" style="font-size:11px">Proteína</div></div>' +
+        '<div style="background:rgba(96,165,250,.1);padding:10px;border-radius:10px"><b class="num" style="color:#60a5fa;font-size:18px">' + analysis.c + 'g</b><div class="dim mt8" style="font-size:11px">Carbo</div></div>' +
+        '<div style="background:rgba(251,191,36,.1);padding:10px;border-radius:10px"><b class="num" style="color:#fbbf24;font-size:18px">' + analysis.f + 'g</b><div class="dim mt8" style="font-size:11px">Gordura</div></div>' +
+        '</div>' +
+        (analysis.tip ? '<p class="mut mt14" style="font-size:12.5px;line-height:1.5;background:rgba(10,15,29,.5);padding:10px 12px;border-radius:10px"><b style="color:var(--acc)">Dica:</b> ' + esc(analysis.tip) + '</p>' : '') +
+        '<button class="btn btn-pri ripple mt14" style="width:100%" id="btn-save-scanned-meal">' +
+        icon('plus') + ' Confirmar e Adicionar aos Macros de Hoje</button>' +
+        '</div>'
+      );
+
+      const saveBtn = document.getElementById('btn-save-scanned-meal');
+      if(saveBtn){
+        saveBtn.onclick = function(){
+          state.nutrition.meals = state.nutrition.meals || [];
+          state.nutrition.meals.unshift(analysis);
+          save();
+          closeModal();
+          toast('Prato fotografado registrado com sucesso!', 'ok', 'apple');
+          RENDER.nutrition();
+        };
+      }
+    }catch(err){
+      closeModal();
+      toast('Erro ao processar imagem.', 'bad');
+    }
+  };
+  reader.readAsDataURL(file);
 }

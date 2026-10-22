@@ -469,3 +469,23 @@ canvas.chart{width:100%;display:block}
 .plate-chip-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
 .plate-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--fd)}
 .plate-pill i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* --- COACH FORJA & READINESS ENGINE --- */
+.readiness-ring{
+  display:inline-flex;align-items:center;justify-content:center;position:relative;
+}
+.habit-btn{
+  border:1px solid var(--line);background:rgba(15,23,42,.6);border-radius:12px;
+  padding:10px 12px;transition:all .18s ease;cursor:pointer;
+}
+.habit-btn.active{
+  border-color:var(--ok);background:rgba(52,211,153,.1);
+}
+.chat-bubble-coach{
+  background:rgba(20,30,52,.75);border:1px solid var(--line);border-radius:14px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#e8eef8;max-width:85%;
+}
+.chat-bubble-user{
+  background:var(--acc2);border-radius:14px;padding:10px 14px;font-size:13.5px;
+  line-height:1.55;color:#fff;max-width:85%;margin-left:auto;
+}

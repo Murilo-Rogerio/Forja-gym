@@ -7,6 +7,7 @@ const Timer = {
   add:function(s){ if(!this.running) return; this.total += s; this.tick(); },
   skip:function(){ if(!this.running) return; this.stop(); this.closeFull(); toast('Descanso encerrado','ok','check'); },
   finish:function(){ this.stop(); this.closeFull(); chime(); buzz([140,70,140]);
+    if(typeof speakCoach === 'function') speakCoach('Descanso finalizado! Hora da próxima série.');
     toast('Descanso concluído — próxima série!','ai','clock'); },
   stop:function(){ clearInterval(this.int); this.int = 0; this.running = false; document.getElementById('restpill').classList.remove('on'); },
   openFull:function(){ document.getElementById('restpill').classList.remove('on'); this.buildFull(); document.getElementById('restfull').classList.add('on'); this.paint(); },

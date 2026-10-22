@@ -1,4 +1,4 @@
-const CACHE = 'forja-v5-supabase';
+const CACHE = 'forja-v6-coach-10x';
 const ASSETS = [
   './', './index.html', './manifest.json', './icons/icon.svg',
   './css/tokens.css', './css/base.css', './css/components.css',

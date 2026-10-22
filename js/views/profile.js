@@ -34,7 +34,9 @@ RENDER.profile = function(){
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('volume') + ' Som de descanso</span>' +
     '<button class="chip ripple ' + (state.settings.sound?'on':'') + '" data-act="set-sound">' + (state.settings.sound?'Ligado':'Desligado') + '</button></div>' +
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('vibrate') + ' Vibração</span>' +
-    '<button class="chip ripple ' + (state.settings.vibrate?'on':'') + '" data-act="set-vib">' + (state.settings.vibrate?'Ligada':'Desligada') + '</button></div></div>' +
+    '<button class="chip ripple ' + (state.settings.vibrate?'on':'') + '" data-act="set-vib">' + (state.settings.vibrate?'Ligada':'Desligada') + '</button></div>' +
+    '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('speaker') + ' Voz do Coach (Áudio)</span>' +
+    '<button class="chip ripple ' + (state.settings.voiceCoach!==false?'on':'') + '" data-act="set-voice">' + (state.settings.voiceCoach!==false?'Ligada':'Desligada') + '</button></div></div>' +
     '<div class="lbl mt20 rise" style="--d:220ms">Aplicativo & Dados</div><div class="card mt8 rise" style="--d:230ms">' +
     '<p class="mut" style="font-size:13px;line-height:1.6">FORJA roda 100% offline — seus dados ficam no aparelho. Instale na tela inicial para experiência de app nativo.</p>' +
     '<div class="stack mt14">' +

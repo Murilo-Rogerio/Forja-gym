@@ -284,6 +284,53 @@ const ACTIONS = {
   'rest-close': function(){ Timer.closeFull(); Timer.showPill(); },
 
   'coach-open': function(){ openCoach(); },
+  'coach-chat': function(){ openAICoachChat(); },
+  'coach-ask-quick': function(d){ sendCoachChatMessage(d.arg); },
+  'chat-send': function(){ sendCoachChatMessage(); },
+  'habit-water-add': function(d){ addWater(parseInt(d.arg, 10)); },
+  'habit-water-reset': function(){ resetWater(); },
+  'habit-creatine': function(){ toggleCreatine(); },
+  'set-voice': function(){
+    state.settings.voiceCoach = state.settings.voiceCoach === false ? true : false;
+    save();
+    if(state.settings.voiceCoach) speakCoach('Voz do Coach Forja ativada!');
+    if(RENDER[curView]) RENDER[curView]();
+  },
+  'ac-warmup-calc': function(d){
+    if(!active) return;
+    const ex = active.ex[+d.arg];
+    if(ex){
+      const targetW = ex.sets.find(function(s){ return s.type === 'work' && s.w > 0; }) || ex.sets[0];
+      const lib = libById(ex.exId);
+      openWarmupCalculator(lib ? lib.name : 'Exercício', targetW ? targetW.w : 0, function(ladder){
+        ladder.forEach(function(s, sIdx){
+          ex.sets.splice(sIdx, 0, { type:'warm', rpe:6, w: s.w, r: s.r, done:false });
+        });
+        save();
+        renderActiveInto(activeScreenEl);
+      });
+    }
+  },
+  'ex-subst-pick': function(d){
+    closeModal();
+    if(typeof activeSubstCallback === 'function'){
+      activeSubstCallback(d.arg);
+      activeSubstCallback = null;
+    }
+  },
+  'ac-ex-subst': function(d){
+    if(!active) return;
+    const ex = active.ex[+d.arg];
+    if(ex){
+      openExerciseSubstitutionModal(ex.exId, function(newExId){
+        ex.exId = newExId;
+        save();
+        renderActiveInto(activeScreenEl);
+        toast('Exercício substituído com sucesso!', 'ok', 'sync');
+      });
+    }
+  },
+  'nutr-quick-add': function(d){ quickAddFood(d.arg); },
   'coach-stag': function(){
     const zone = document.getElementById('stag-zone');
     if(zone){ renderStagInto(zone, stagnationAnalysis()); zone.scrollIntoView({ behavior:'smooth' }); }
@@ -560,6 +607,11 @@ const CHANGES = {
   'cex-file': function(el){ handleCustomExFile(el); },
   'hevy-file-select': function(el){
     handleHevyFileSelect(el);
+  },
+  'habit-sleep': function(el){ setSleep(parseFloat(el.value)); },
+  'nutr-scan-photo': function(el){
+    const file = el.files && el.files[0];
+    if(file) handleMealPhotoUpload(file);
   },
   'post-photo': function(el){
     const file = el.files && el.files[0];

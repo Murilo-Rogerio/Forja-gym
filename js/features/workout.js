@@ -183,7 +183,11 @@ function renderActiveInto(el){
         '</div></div>' +
         suggHTML +
         '<div class="mt14">' + setRows + '</div>' +
-        '<button class="btn btn-ghost btn-sm ripple mt14" style="width:100%" data-act="ac-set-add" data-arg="' + i + '">' + icon('plus') + ' Adicionar Série</button>' +
+        '<div class="rowline mt8" style="gap:6px">' +
+        '<button class="btn btn-ghost btn-sm ripple" style="flex:1;font-size:11.5px;padding:6px 8px" data-act="ac-warmup-calc" data-arg="' + i + '">' + icon('zap') + ' Escada Aquecimento</button>' +
+        '<button class="btn btn-ghost btn-sm ripple" style="flex:1;font-size:11.5px;padding:6px 8px" data-act="ac-ex-subst" data-arg="' + i + '">' + icon('sync') + ' Substituir com IA</button>' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm ripple mt8" style="width:100%" data-act="ac-set-add" data-arg="' + i + '">' + icon('plus') + ' Adicionar Série</button>' +
         '</div>';
     }).join('');
   }
@@ -322,6 +326,9 @@ function toggleSet(i, j){
     buzz([80, 60, 80]);
     const lib = libById(ex.exId);
     toast('NOVO RECORDE PESSOAL (PR) — ' + (lib ? lib.name : 'Exercício') + '!', 'ai', 'trophy');
+    if(typeof speakCoach === 'function') speakCoach('Novo recorde batido! Excelente!');
+  } else if(s.done && !isLast){
+    if(typeof speakCoach === 'function') speakCoach('Série concluída! Descanso iniciado.');
   }
 }
 

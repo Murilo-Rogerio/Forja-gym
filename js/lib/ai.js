@@ -1,20 +1,30 @@
 let aiDraft = null, aiBusy = false;
 
-/* Chamada oficial à API Gemini */
-async function geminiCall(prompt, wantJson){
+/* Chamada oficial à API Gemini (suporta texto e imagens multimodais) */
+async function geminiCall(prompt, wantJson, inlineImage){
   const key = state.settings.gemini;
   if(!key) return null;
   const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   for(const m of models){
     try{
-      const body = { contents:[{ parts:[{ text: prompt }] }] };
-      if(wantJson) body.generationConfig = { responseMimeType:'application/json', temperature:.7 };
+      const parts = [];
+      if(inlineImage && inlineImage.data && inlineImage.mimeType){
+        parts.push({
+          inlineData: {
+            mimeType: inlineImage.mimeType,
+            data: inlineImage.data
+          }
+        });
+      }
+      parts.push({ text: prompt });
+      const body = { contents: [{ parts: parts }] };
+      if(wantJson) body.generationConfig = { responseMimeType:'application/json', temperature:.4 };
       const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(key),
         { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       if(!r.ok) continue;
       const d = await r.json();
-      const parts = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
-      const t = parts ? parts.map(function(p){ return p.text || ''; }).join('') : '';
+      const resParts = d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
+      const t = resParts ? resParts.map(function(p){ return p.text || ''; }).join('') : '';
       if(t) return t;
     }catch(e){}
   }
@@ -428,5 +438,93 @@ function localEstimateMeal(text){
     vitB12: +vitB12.toFixed(1),
     tip: 'Estimativa calculada localmente. Conecte sua chave Gemini em Perfil para análise nutricional de alta precisão.',
     isAI: false
+  };
+}
+
+/* Análise Visual de Prato/Refeição com Gemini Multimodal Vision */
+async function analyzeMealPhotoWithAI(base64Data, mimeType){
+  if(state.settings.gemini){
+    const prompt = 'Você é um nutricionista esportivo de elite brasileiro especialista em avaliação visual de pratos. ' +
+      'Examine esta foto de refeição com máxima atenção. Identifique cada item visível no prato, estime a gramatura de cada alimento e calcule os macronutrientes totais e micronutrientes essenciais. ' +
+      'Responda SOMENTE com JSON válido, sem texto introdutório ou markdown extra, seguindo exatamente este schema:\n' +
+      '{\n' +
+      '  "mealName": "Nome descritivo da refeição (ex: Arroz, Feijão, Peito de Frango e Salada)",\n' +
+      '  "items": ["150g peito de frango grelhado", "120g arroz branco", "80g feijão carioca", "salada verde"],\n' +
+      '  "kcal": 550,\n' +
+      '  "p": 42,\n' +
+      '  "c": 58,\n' +
+      '  "f": 14,\n' +
+      '  "fiber": 6.5,\n' +
+      '  "iron": 3.8,\n' +
+      '  "zinc": 2.9,\n' +
+      '  "calcium": 90,\n' +
+      '  "magnesium": 65,\n' +
+      '  "potassium": 680,\n' +
+      '  "sodium": 490,\n' +
+      '  "vitC": 18,\n' +
+      '  "vitD": 0.4,\n' +
+      '  "vitB12": 1.2,\n' +
+      '  "tip": "Dica nutricional para hipertrofia e síntese proteica desta refeição."\n' +
+      '}\n' +
+      'Valores numéricos de macros em gramas (g). Micronutrientes em mg (ou mcg para Vit D e B12).';
+
+    try{
+      const raw = await geminiCall(prompt, true, { data: base64Data, mimeType: mimeType || 'image/jpeg' });
+      const res = extractJSON(raw);
+      if(res && res.kcal){
+        return {
+          id: uid(),
+          at: Date.now(),
+          text: res.mealName || 'Foto de refeição',
+          name: res.mealName || 'Foto analisada por IA',
+          items: res.items || [],
+          kcal: Math.round(res.kcal),
+          p: Math.round(res.p || 0),
+          c: Math.round(res.c || 0),
+          f: Math.round(res.f || 0),
+          fiber: +(res.fiber || 0).toFixed(1),
+          iron: +(res.iron || 0).toFixed(1),
+          zinc: +(res.zinc || 0).toFixed(1),
+          calcium: Math.round(res.calcium || 0),
+          magnesium: Math.round(res.magnesium || 0),
+          potassium: Math.round(res.potassium || 0),
+          sodium: Math.round(res.sodium || 0),
+          vitC: Math.round(res.vitC || 0),
+          vitD: +(res.vitD || 0).toFixed(1),
+          vitB12: +(res.vitB12 || 0).toFixed(1),
+          tip: res.tip || 'Boa refeição para atletas de força e hipertrofia.',
+          isAI: true,
+          photoScanned: true
+        };
+      }
+    }catch(err){
+      console.warn('Erro na análise de foto com Gemini:', err);
+    }
+  }
+
+  // Fallback offline caso não haja Gemini conectado
+  return {
+    id: uid(),
+    at: Date.now(),
+    text: 'Prato fotografado (estimativa balanceada)',
+    name: 'Prato do Atleta',
+    items: ['150g Proteína magra', '150g Carboidrato', 'Porção de vegetais'],
+    kcal: 520,
+    p: 38,
+    c: 56,
+    f: 14,
+    fiber: 5.0,
+    iron: 2.8,
+    zinc: 2.1,
+    calcium: 110,
+    magnesium: 60,
+    potassium: 440,
+    sodium: 360,
+    vitC: 15,
+    vitD: 0.5,
+    vitB12: 1.0,
+    tip: 'Estimativa base. Conecte sua chave Gemini em Perfil para visão computacional de pratos com IA.',
+    isAI: false,
+    photoScanned: true
   };
 }

@@ -47,6 +47,11 @@ const IC = {
   bolt2:'<path d="M8 3h8l-4 6h5L7 21l2.5-8H5.5z"/>',
   skip:'<path d="M5 5l9 7-9 7z"/><path d="M18 5v14"/>',
   plate:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/>',
-  fileCsv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h8"/>'
+  fileCsv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h8"/>',
+  droplet:'<path d="M12 2.5s-7 8.5-7 13.5a7 7 0 0 0 14 0c0-5-7-13.5-7-13.5z"/>',
+  moon:'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  mic:'<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/>',
+  speaker:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  robot:'<rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5"/><circle cx="15" cy="13" r="1.5"/><path d="M12 4v4"/><path d="M9 4h6"/>'
 };
 const icon = (n, cls) => '<svg class="ic ' + (cls||'') + '" viewBox="0 0 24 24" aria-hidden="true">' + (IC[n]||'') + '</svg>';
