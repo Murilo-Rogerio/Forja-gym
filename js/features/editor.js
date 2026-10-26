@@ -1,5 +1,5 @@
 let editing = null, editorEl = null, restCtx = null;
-let libFilter = 'Todos', libQuery = '', libSelect = false;
+let libFilter = 'Todos', libEquipFilter = 'Todos', libQuery = '', libSelect = false;
 let pendingCustomExImg = '';
 
 function libChipsHTML(){
@@ -11,12 +11,22 @@ function libChipsHTML(){
   }).join('');
 }
 
+function libEquipChipsHTML(){
+  const equips = ['Todos','Barra','Halteres','Máquina','Cabo','Peso Corporal','Smith'];
+  return equips.map(function(eq){
+    const count = eq === 'Todos' ? state.library.length : state.library.filter(function(e){ return (e.equip || 'Livre') === eq; }).length;
+    return '<button class="chip ripple ' + (eq === libEquipFilter ? 'on' : '') + '" data-act="lib-equip-filter" data-arg="' + esc(eq) + '" style="font-size:11.5px;padding:3px 10px">' +
+      esc(eq) + ' <small class="dim">(' + count + ')</small></button>';
+  }).join('');
+}
+
 function libListHTML(){
   const q = libQuery.toLowerCase().trim();
   const list = state.library.filter(function(e){
     const matchG = (libFilter === 'Todos' || e.group === libFilter);
-    const matchQ = !q || normTxt(e.name).includes(normTxt(q)) || normTxt(e.equip || '').includes(normTxt(q));
-    return matchG && matchQ;
+    const matchEq = (libEquipFilter === 'Todos' || (e.equip || 'Livre') === libEquipFilter);
+    const matchQ = !q || normTxt(e.name).includes(normTxt(q)) || normTxt(e.equip || '').includes(normTxt(q)) || normTxt(e.primary || '').includes(normTxt(q));
+    return matchG && matchEq && matchQ;
   });
 
   if(!list.length){
@@ -27,10 +37,13 @@ function libListHTML(){
   }
 
   return list.map(function(e){
-    // Foto do exercício ou ícone estilizado
+    // Foto do exercício com fallback gracioso para ícone estilizado
     let thumb = '';
     if(e.img){
-      thumb = '<img src="' + esc(e.img) + '" class="ex-thumb" alt="' + esc(e.name) + '">';
+      thumb = '<div style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex:none;background:#060a12;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center">' +
+        '<img src="' + esc(e.img) + '" class="ex-thumb" style="width:100%;height:100%;object-fit:cover" alt="' + esc(e.name) + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="ex-thumb-icon" style="display:none;width:100%;height:100%">' + icon('bolt2') + '</div>' +
+        '</div>';
     } else {
       thumb = '<div class="ex-thumb-icon">' + icon('bolt2') + '</div>';
     }
@@ -39,9 +52,11 @@ function libListHTML(){
       thumb +
       '<div style="flex:1;min-width:0;cursor:pointer" data-act="lib-view-ex" data-arg="' + e.id + '">' +
       '<b style="font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.name) + '</b>' +
-      '<div class="lbl mt8" style="color:var(--dim);font-size:11.5px">' +
-      esc(e.group) + ' · ' + esc(e.equip || 'Livre') +
-      (e.custom ? ' · <span style="color:var(--acc);font-weight:600">Personalizado</span>' : '') +
+      '<div class="lbl mt4" style="color:var(--dim);font-size:11.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+      '<span class="preset-tag" style="font-size:9.5px;padding:2px 6px">' + esc(e.group) + '</span>' +
+      '<span class="chip" style="font-size:9.5px;padding:1px 6px;margin:0">' + esc(e.equip || 'Livre') + '</span>' +
+      (e.primary ? '<span class="dim" style="font-size:11px">· ' + esc(e.primary) + '</span>' : '') +
+      (e.custom ? '<span style="color:var(--acc);font-weight:600">· Personalizado</span>' : '') +
       '</div></div>' +
       (libSelect
         ? '<button class="btn btn-pri btn-sm ripple" style="flex:none" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Usar</button>'
@@ -58,6 +73,7 @@ function renderLibList(){
 function browseLibrary(selectMode, ctx){
   libQuery = '';
   libFilter = 'Todos';
+  libEquipFilter = 'Todos';
   libSelect = !!selectMode;
   window.libAddContext = ctx || (selectMode && activeScreenEl && (!editorEl || !editorEl.isConnected) ? 'active' : 'editor');
 
@@ -70,40 +86,164 @@ function browseLibrary(selectMode, ctx){
     '<div class="card acc mb14" style="display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:14px" data-act="lib-new">' +
     '<div style="width:42px;height:42px;border-radius:12px;background:rgba(56,189,248,.15);color:var(--acc);display:flex;align-items:center;justify-content:center;flex:none">' + icon('plus') + '</div>' +
     '<div style="flex:1"><b style="font-size:14.5px;color:var(--acc)">Cadastrar Exercício Próprio</b>' +
-    '<div class="dim" style="font-size:12px">Adicione com nome, grupo muscular, execução e foto</div></div>' +
+    '<div class="dim" style="font-size:12px">Adicione com foto, grupo muscular e instruções biomecânicas</div></div>' +
     icon('fwd') + '</div>' +
 
     '<div style="position:relative"><span style="position:absolute;left:14px;top:13px;color:var(--dim);display:flex">' + icon('search') + '</span>' +
-    '<input class="fld" placeholder="Buscar por nome ou equipamento (ex: Supino, Halteres, Cabo)..." value="" data-inp="lib-search" style="padding-left:44px"></div>' +
-    '<div class="rowline mt14" id="lib-chips" style="gap:6px;flex-wrap:wrap">' + libChipsHTML() + '</div>' +
+    '<input class="fld" placeholder="Buscar por nome, músculo ou equipamento..." value="" data-inp="lib-search" style="padding-left:44px"></div>' +
+    '<div class="mt14"><div class="lbl" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Grupo Muscular</div>' +
+    '<div class="rowline" id="lib-chips" style="gap:6px;flex-wrap:wrap">' + libChipsHTML() + '</div></div>' +
+    '<div class="mt10"><div class="lbl" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Equipamento</div>' +
+    '<div class="rowline" id="lib-equip-chips" style="gap:6px;flex-wrap:wrap">' + libEquipChipsHTML() + '</div></div>' +
     '<div class="mt20 stack" id="lib-list">' + libListHTML() + '</div></div>'
   );
 }
 
-/* Modal detalhado de visualização do exercício */
+/* Modal detalhado de visualização do exercício estilo Hevy Pro (Foto, Mapa Muscular, Biomecânica, PR, 1RM e Histórico Real) */
 function openExerciseDetail(exId){
   const e = libById(exId);
   if(!e) return;
 
-  let imgHTML = '';
+  // Header com Imagem Demonstrativa e Badges
+  let headerHTML = '';
   if(e.img){
-    imgHTML = '<img src="' + esc(e.img) + '" class="ex-detail-img" alt="' + esc(e.name) + '">';
+    headerHTML = '<div class="ex-detail-banner">' +
+      '<img src="' + esc(e.img) + '" class="ex-detail-img" alt="' + esc(e.name) + '" style="width:100%;height:220px;object-fit:cover;display:block;margin:0" onerror="this.style.display=\'none\';">' +
+      '<div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(10,15,26,0.95) 0%, rgba(10,15,26,0.4) 50%, transparent 100%)"></div>' +
+      '<div style="position:absolute;bottom:14px;left:16px;right:16px">' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<span class="preset-tag" style="background:var(--acc);color:#050811;font-weight:700;padding:3px 8px">' + esc(e.group) + '</span>' +
+      '<span class="chip" style="background:rgba(255,255,255,.15);color:#fff;backdrop-filter:blur(4px);padding:3px 8px;margin:0">' + esc(e.equip || 'Livre') + '</span>' +
+      (e.custom ? '<span class="chip" style="background:rgba(244,63,94,.2);color:#fb7185;border:1px solid #f43f5e;margin:0">Personalizado</span>' : '') +
+      '</div>' +
+      '<div class="h-display h2 mt6" style="color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)">' + esc(e.name) + '</div>' +
+      '</div></div>';
+  } else {
+    headerHTML = '<div class="sheet-grip"></div>' +
+      '<div class="rowline">' +
+      '<div><div style="display:flex;gap:6px;align-items:center">' +
+      '<span class="preset-tag">' + esc(e.group) + '</span>' +
+      '<span class="chip" style="font-size:11px">' + esc(e.equip || 'Livre') + '</span>' +
+      '</div>' +
+      '<div class="h-display h2 mt8">' + esc(e.name) + '</div></div>' +
+      '</div>';
   }
 
-  modalHTML(
-    '<div class="sheet-grip"></div>' +
-    imgHTML +
-    '<div class="rowline">' +
-    '<div><span class="preset-tag">' + esc(e.group) + ' · ' + esc(e.equip || 'Livre') + '</span>' +
-    '<div class="h-display h2 mt8">' + esc(e.name) + '</div></div>' +
+  // Estatísticas e PR reais
+  const rec = (state.records || {})[exId];
+  const h = historyOf(exId);
+  const totalSessions = h.length;
+  const bestScore = rec ? (rec.w > 0 ? fmtN(rec.best) + ' kg' : rec.best + ' reps') : '—';
+  const bestSetTxt = rec ? (rec.w > 0 ? fmtN(rec.w) + ' kg × ' + rec.r + ' reps' : rec.r + ' reps') : 'Sem registro';
+
+  // Mapa Muscular Anatômico Hevy (Heatmap em vermelho/laranja) + Dossiê de Músculos Alvo
+  const muscleMapHTML =
+    '<div class="card mt14" style="padding:14px">' +
+    '<div class="rowline" style="align-items:flex-start;gap:14px">' +
+    '<div class="ex-bodymap-mini" style="flex:none;width:130px;background:#050811;border-radius:12px;padding:8px 4px;border:1px solid var(--line2)">' +
+    '<div style="text-align:center;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Foco Anatômico</div>' +
+    bodyMapHTML({ [e.group]: 100 }) +
     '</div>' +
-    (e.desc ? '<div class="card mt14"><div class="lbl">Instruções de Execução</div><p class="mut mt8" style="font-size:13.5px;line-height:1.55">' + esc(e.desc) + '</p></div>' : '') +
+    '<div style="flex:1;min-width:0">' +
+    '<div class="lbl" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Músculo Primário</div>' +
+    '<b style="font-size:14px;color:var(--acc);display:block;margin-top:2px">' + esc(e.primary || e.group) + '</b>' +
+    '<div class="lbl mt10" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Músculos Secundários</div>' +
+    '<div class="dim mt2" style="font-size:12px;line-height:1.4">' + esc(e.secondary || 'Músculos estabilizadores e core') + '</div>' +
+    '<div class="lbl mt10" style="font-size:10px;text-transform:uppercase;letter-spacing:.05em">Equipamento</div>' +
+    '<div class="mt4"><span class="chip" style="font-size:10.5px;padding:2px 8px;margin:0">' + esc(e.equip || 'Livre') + '</span></div>' +
+    '</div>' +
+    '</div></div>';
+
+  // Guia Biomecânico de Execução (Setup, Movimento, Dica de Ouro)
+  let guideHTML = '';
+  if(e.setup || e.execution || e.tip){
+    guideHTML =
+      '<div class="mt14">' +
+      '<div class="lbl" style="margin-bottom:8px">Guia Biomecânico de Execução</div>' +
+      (e.setup ?
+        '<div class="card mb10" style="border-left:3px solid #38bdf8;padding:12px 14px;background:rgba(56,189,248,.03)">' +
+        '<b style="color:#38bdf8;font-size:12px;display:flex;align-items:center;gap:6px">🛠️ 1. Preparação & Postura (Setup)</b>' +
+        '<p class="mut mt6" style="font-size:12.5px;line-height:1.55;color:var(--txt)">' + esc(e.setup) + '</p></div>' : '') +
+      (e.execution ?
+        '<div class="card mb10" style="border-left:3px solid #10b981;padding:12px 14px;background:rgba(16,185,129,.03)">' +
+        '<b style="color:#10b981;font-size:12px;display:flex;align-items:center;gap:6px">⚡ 2. Movimento & Respiração (Execução)</b>' +
+        '<p class="mut mt6" style="font-size:12.5px;line-height:1.55;color:var(--txt)">' + esc(e.execution) + '</p></div>' : '') +
+      (e.tip ?
+        '<div class="card mb10" style="border-left:3px solid #f59e0b;padding:12px 14px;background:rgba(245,158,11,.04)">' +
+        '<b style="color:#f59e0b;font-size:12px;display:flex;align-items:center;gap:6px">💡 3. Dica Biomecânica de Ouro</b>' +
+        '<p class="mut mt6" style="font-size:12.5px;line-height:1.55;color:var(--txt)">' + esc(e.tip) + '</p></div>' : '') +
+      '</div>';
+  } else if(e.desc){
+    guideHTML = '<div class="card mt14"><div class="lbl">Instruções de Execução</div><p class="mut mt8" style="font-size:13px;line-height:1.55">' + esc(e.desc) + '</p></div>';
+  }
+
+  // Sessões anteriores que incluíram este exercício
+  const pastSessions = (state.logs || []).filter(function(l){
+    return (l.ex || []).some(function(x){ return x.exId === exId; });
+  }).sort(function(a,b){ return b.date - a.date; });
+
+  let histRows = '';
+  if(pastSessions.length > 0){
+    histRows = pastSessions.slice(0, 8).map(function(l){
+      const match = l.ex.find(function(x){ return x.exId === exId; });
+      const setSummaries = (match.sets || []).map(function(s){
+        const wStr = s.w > 0 ? fmtN(s.w) + 'kg' : 'PC';
+        return '<span class="chip" style="font-size:11px;padding:2px 7px">' + wStr + ' × ' + s.r + '</span>';
+      }).join(' ');
+      return '<div class="wrow" style="padding:10px 12px;margin-bottom:8px;align-items:flex-start">' +
+        '<div style="flex:1">' +
+        '<div class="rowline"><b>' + esc(l.name) + '</b>' +
+        '<span class="dim" style="font-size:11.5px">' + fmtDate(l.date) + '</span></div>' +
+        '<div class="rowline mt8" style="gap:4px;flex-wrap:wrap">' + setSummaries + '</div>' +
+        '</div></div>';
+    }).join('');
+  } else {
+    histRows = '<div class="empty" style="padding:16px;font-size:12.5px">Nenhum treino realizado com este exercício ainda.</div>';
+  }
+
+  const hasChart = h.length >= 2;
+  const chartBlock = hasChart ?
+    '<div class="card mt14"><div class="lbl">Evolução do 1RM Estimado</div>' +
+    '<div class="chartwrap mt8"><canvas class="chart" id="ex-detail-cv" data-h="130"></canvas></div></div>' : '';
+
+  modalHTML(
+    headerHTML +
+
+    // Cards de performance real
+    '<div class="split3 mt14" style="gap:8px">' +
+    '<div class="card" style="padding:10px;text-align:center"><span class="lbl" style="font-size:9.5px">Melhor 1RM</span><b class="num" style="display:block;font-size:16px;color:var(--acc);margin-top:2px">' + bestScore + '</b></div>' +
+    '<div class="card" style="padding:10px;text-align:center"><span class="lbl" style="font-size:9.5px">Melhor Série</span><b class="num" style="display:block;font-size:12.5px;margin-top:4px">' + bestSetTxt + '</b></div>' +
+    '<div class="card" style="padding:10px;text-align:center"><span class="lbl" style="font-size:9.5px">Sessões</span><b class="num" style="display:block;font-size:16px;margin-top:2px">' + totalSessions + '</b></div>' +
+    '</div>' +
+
+    chartBlock +
+
+    muscleMapHTML +
+
+    guideHTML +
+
+    '<div class="mt14"><div class="lbl">Histórico de Treinos do Exercício</div>' +
+    '<div class="mt8">' + histRows + '</div></div>' +
+
     '<div class="mt20 stack" style="gap:10px">' +
-    (libSelect ? '<button class="btn btn-pri ripple" style="width:100%" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Adicionar à Ficha Atual</button>' : '') +
+    '<button class="btn btn-pri ripple" style="width:100%" data-act="lib-quick-start" data-arg="' + e.id + '">' + icon('play') + ' Iniciar Treino Livre com Este Exercício</button>' +
+    (libSelect ? '<button class="btn btn-ghost ripple" style="width:100%" data-act="lib-add" data-arg="' + e.id + '">' + icon('plus') + ' Adicionar à Ficha Atual</button>' : '') +
     (e.custom ? '<button class="btn btn-danger ripple" style="width:100%" data-act="lib-del-custom" data-arg="' + e.id + '">' + icon('trash') + ' Excluir Exercício Personalizado</button>' : '') +
     '<button class="btn btn-ghost ripple" style="width:100%" data-act="modal-close">Fechar</button>' +
     '</div>'
   );
+
+  if(hasChart){
+    requestAnimationFrame(function(){
+      const cv = document.getElementById('ex-detail-cv');
+      if(cv){
+        const pts = h.map(function(pt){
+          return { l: new Date(pt.date).toLocaleDateString('pt-BR', {day:'numeric',month:'short'}).replace('.',''), v: Math.round(pt.e) };
+        });
+        drawLineChart(cv, pts);
+      }
+    });
+  }
 }
 
 /* Modal de cadastro de exercício personalizado com foto e instruções */

@@ -1,47 +1,8 @@
 let postPhoto = null, postLogRef = null, remoteFeedCache = [];
 
 function seedFeedDemo(){
-  if(state.feedSeeded) return;
-  state.feedSeeded = true;
-  state.friends = [
-    { email:'carla.menezes@example.com', name:'Carla Menezes' },
-    { email:'rafa.pinheiro@example.com', name:'Rafa Pinheiro' },
-    { email:'duda.lima@example.com', name:'Duda Lima' }
-  ];
-  const now = Date.now();
-  state.posts = [
-    {
-      id: uid(),
-      at: now - 3*3600000,
-      name: 'Carla Menezes',
-      text: 'Treino de costas concluído com sucesso. A remada curvada subiu 5kg essa semana — a consistência sempre paga!',
-      photo: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
-      likes: 12,
-      liked: false,
-      w: { name:'Treino B — Costas e Bíceps', volume:8420, duration:52*60000, reps:126, prs:1, groups:['Costas','Braços'] }
-    },
-    {
-      id: uid(),
-      at: now - 9*3600000,
-      name: 'Rafa Pinheiro',
-      text: 'Leg day completo! Saí rastejando mas bati novo PR no agachamento livre. O plano da IA deu muito certo.',
-      photo: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
-      likes: 24,
-      liked: false,
-      w: { name:'Treino C — Pernas Completo', volume:11430, duration:61*60000, reps:118, prs:2, groups:['Pernas','Core'] }
-    },
-    {
-      id: uid(),
-      at: now - 26*3600000,
-      name: 'Duda Lima',
-      text: 'Meta semanal de tonelagem atingida com folga! Rumo ao nível 5 no FORJA.',
-      photo: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80',
-      likes: 9,
-      liked: false,
-      w: { name:'Treino A — Peito e Ombros', volume:6980, duration:47*60000, reps:104, prs:0, groups:['Peito','Ombros','Braços'] }
-    }
-  ];
-  save();
+  // Desativado: o feed é 100% real com treinos e publicações autênticas do atleta
+  if(state) state.feedSeeded = true;
 }
 
 function openComposer(prefLog){

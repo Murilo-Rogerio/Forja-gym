@@ -179,6 +179,8 @@ RENDER.nutrition = function(){
     '<div class="eyebrow rise">Combustível & Nutrição</div>' +
     '<div class="h-display h1 mt8 rise" style="--d:60ms">CONTADOR DE<br>MACROS & KCAL</div>' +
 
+    (!has && !custom ? '<div class="card mt14 rise" style="padding:12px 14px;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);display:flex;align-items:center;gap:12px"><div style="color:var(--warn);font-size:20px;flex:none">' + icon('info') + '</div><div style="flex:1;font-size:12.5px;color:var(--txt);line-height:1.45">Metas padrão de referência. Para calcular calorias e macronutrientes reais da sua Taxa Metabólica Basal, preencha peso, altura e idade no <a href="#" data-act="nav" data-arg="profile" style="color:var(--acc);font-weight:600;text-decoration:underline">Perfil</a>.</div></div>' : '') +
+
     // CARD PRINCIPAL: RESUMO DE KCAL & MACROS COM BARRAS DE PROGRESSO
     '<div class="macro-ring-card mt20 rise" style="--d:80ms">' +
     '<div class="rowline">' +

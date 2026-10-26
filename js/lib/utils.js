@@ -20,7 +20,7 @@ const fmtTime = s => { s = Math.max(0, Math.round(s)); return Math.floor(s/60) +
 const fmtDur = ms => { const m = Math.round(ms/60000); return m >= 60 ? Math.floor(m/60)+'h '+(m%60)+'min' : m + ' min'; };
 const fmtDate = t => new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 const fmtDateL = t => new Date(t).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-const e1RM = (w,r) => w * (1 + r/30);
+const e1RM = (w,r) => r === 1 ? w : (r > 1 && w > 0 ? +(w * (1 + r/30)).toFixed(1) : 0);
 const mondayOf = d => { const dt = new Date(d); dt.setDate(dt.getDate() - ((dt.getDay()+6)%7)); dt.setHours(0,0,0,0); return dt; };
 const parseNum = v => { const n = parseFloat(String(v).replace(',','.')); return isFinite(n) ? n : 0; };
 const normTxt = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();

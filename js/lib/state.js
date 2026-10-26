@@ -3,8 +3,9 @@ let state = null, session = null, FB = null, active = null;
 
 function defaultState(){
   return {
-    v: 5,
+    v: 7,
     user: { name:'', sex:'m', age:'', weight:'', height:'', activity:'moderado', goal:'manter', xp:0, avatar:'', createdAt:Date.now() },
+    weightLogs: [],
     workouts: [],
     library: LIB.map(function(l){ return Object.assign({}, l); }),
     logs: [],
@@ -17,7 +18,7 @@ function defaultState(){
     demo: false,
     posts: [],
     friends: [],
-    feedSeeded: false,
+    feedSeeded: true,
     updatedAt: 0
   };
 }
@@ -94,6 +95,46 @@ function migrateState(s){
     s.v = 5;
   }
 
+  // Versão 6: Histórico de Pesagem Corporal e eliminação de dados fictícios
+  if(s.v < 6){
+    s.weightLogs = s.weightLogs || [];
+    if(s.user && s.user.weight && !s.weightLogs.length){
+      s.weightLogs.push({
+        id: uid(),
+        date: s.user.createdAt || Date.now(),
+        weight: parseNum(s.user.weight),
+        note: 'Peso inicial'
+      });
+    }
+    const fakeNames = ['Carla Menezes', 'Rafa Pinheiro', 'Duda Lima'];
+    s.posts = (s.posts || []).filter(function(p){ return !fakeNames.includes(p.name); });
+    s.friends = (s.friends || []).filter(function(f){ return !fakeNames.includes(f.name); });
+    s.feedSeeded = true;
+    s.v = 6;
+  }
+
+  // Versão 7: Biblioteca Hevy Pro Expandida (132 exercícios com biomecânica, fotos e mapa muscular)
+  if(s.v < 7){
+    s.library = s.library || [];
+    LIB.forEach(function(libEx){
+      const existing = s.library.find(function(e){ return e.id === libEx.id; });
+      if(!existing){
+        s.library.push(Object.assign({}, libEx));
+      } else {
+        existing.img = libEx.img || existing.img || '';
+        existing.desc = libEx.desc || existing.desc || '';
+        existing.equip = libEx.equip || existing.equip || 'Livre';
+        existing.primary = libEx.primary || existing.primary || libEx.group;
+        existing.secondary = libEx.secondary || existing.secondary || '';
+        existing.setup = libEx.setup || existing.setup || '';
+        existing.execution = libEx.execution || existing.execution || '';
+        existing.tip = libEx.tip || existing.tip || '';
+      }
+    });
+    s.v = 7;
+  }
+  s.weightLogs = s.weightLogs || [];
+
   const todayStr = new Date().toISOString().slice(0,10);
   s.habits = Object.assign({ date: todayStr, water: 0, waterTarget: 3500, creatine: false, sleep: 7.5 }, s.habits || {});
   if(s.habits.date !== todayStr){
@@ -153,4 +194,20 @@ function getFbCfg(){
 }
 function libById(id){
   return state.library.find(function(e){ return e.id === id; }) || null;
+}
+
+function logBodyWeight(weight, note){
+  if(!state) return;
+  const w = parseNum(weight);
+  if(w <= 0) return;
+  state.user.weight = w;
+  state.weightLogs = state.weightLogs || [];
+  state.weightLogs.push({
+    id: uid(),
+    date: Date.now(),
+    weight: w,
+    note: (note || '').trim()
+  });
+  state.weightLogs.sort(function(a,b){ return a.date - b.date; });
+  save();
 }

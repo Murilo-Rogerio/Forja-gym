@@ -23,10 +23,10 @@ function openOnboarding(){
 
     '<div class="split2 mt14"><div><label class="flabel lbl">Sexo</label>' +
     '<select class="fld mt8" id="ob-sex"><option value="m">Masculino</option><option value="f">Feminino</option></select></div>' +
-    '<div><label class="flabel lbl">Idade</label><input class="fld mt8" id="ob-age" type="number" inputmode="numeric" placeholder="25"></div></div>' +
+    '<div><label class="flabel lbl">Idade</label><input class="fld mt8" id="ob-age" type="number" inputmode="numeric" placeholder="Ex: 25"></div></div>' +
 
-    '<div class="split2 mt14"><div><label class="flabel lbl">Peso (kg)</label><input class="fld mt8" id="ob-weight" type="number" inputmode="decimal" placeholder="78"></div>' +
-    '<div><label class="flabel lbl">Altura (cm)</label><input class="fld mt8" id="ob-height" type="number" inputmode="numeric" placeholder="176"></div></div>' +
+    '<div class="split2 mt14"><div><label class="flabel lbl">Peso (kg)</label><input class="fld mt8" id="ob-weight" type="number" inputmode="decimal" placeholder="Ex: 75.0"></div>' +
+    '<div><label class="flabel lbl">Altura (cm)</label><input class="fld mt8" id="ob-height" type="number" inputmode="numeric" placeholder="Ex: 175"></div></div>' +
 
     '<label class="flabel lbl mt14">Nível de atividade</label><select class="fld mt8" id="ob-activity">' + actOpts + '</select>' +
 

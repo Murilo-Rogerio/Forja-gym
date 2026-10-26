@@ -489,3 +489,42 @@ canvas.chart{width:100%;display:block}
   background:var(--acc2);border-radius:14px;padding:10px 14px;font-size:13.5px;
   line-height:1.55;color:#fff;max-width:85%;margin-left:auto;
 }
+
+/* --- ANOTAÇÕES DO EXERCÍCIO (HEVY STYLE) --- */
+.ex-notes-text{
+  font-size:12px;color:var(--acc);background:rgba(56,189,248,.08);
+  border:1px dashed rgba(56,189,248,.35);border-radius:8px;padding:6px 10px;
+  display:flex;align-items:center;gap:6px;line-height:1.4;
+}
+.ex-notes-text .ic{width:14px;height:14px;flex:none}
+
+/* --- HISTÓRICO DE PESAGEM CORPORAL --- */
+.weight-badge{
+  display:inline-flex;align-items:center;gap:6px;font-family:var(--fd);
+  font-size:18px;font-weight:700;color:var(--acc);
+}
+
+/* --- SÉRIE CONCLUÍDA (FEEDBACK TÁTIL & VISUAL HEVY STYLE) --- */
+.setrow{transition:background .2s ease, border-color .2s ease}
+.setrow.done{
+  background:rgba(16,185,129,.07);
+  border-radius:10px;
+  padding:8px 8px;
+  margin:3px 0;
+  border-left:2.5px solid var(--ok);
+}
+.setrow.done .setfield{
+  background:rgba(16,185,129,.12);
+  border-color:rgba(16,185,129,.35);
+}
+.setrow.done .setno{color:var(--ok);font-weight:700}
+
+/* --- BIBLIOTECA HEVY PRO & DOSSIÊ BIOMECÂNICO --- */
+.ex-detail-banner{
+  position:relative;margin:-16px -16px 14px;border-radius:18px 18px 0 0;overflow:hidden;
+  max-height:220px;background:#060a12;
+}
+.ex-bodymap-mini .bodymap{gap:6px;justify-content:center}
+.ex-bodymap-mini .bodymap figure{max-width:62px;flex:1;text-align:center;margin:0}
+.ex-bodymap-mini .bodymap svg{max-height:120px;width:100%;display:block}
+.ex-bodymap-mini .bodymap figcaption{font-size:9px;margin-top:2px;letter-spacing:1px;color:var(--dim)}

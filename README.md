@@ -49,7 +49,7 @@ O **FORJA** foi desenvolvido para solucionar a falta de flexibilidade, custos pr
   - `F` — **Falha (Failure Set):** Séries até o esgotamento concêntrico absoluto.
 - **Treino Livre & Calculadora de Anilhas:** Montagem livre de treino na hora e calculadora visual de distribuição de anilhas por lado na barra.
 - **Importador & Exportador Hevy:** Compatibilidade total com arquivos CSV de histórico do Hevy.
-- **Biblioteca com 48+ Exercícios Comuns:** Segmentados por Peito, Costas, Pernas, Ombros, Braços e Core com filtros dinâmicos e suporte a exercícios autorais customizados.
+- **Biblioteca Completa com 132+ Exercícios Estilo Hevy:** Segmentados por Peito, Costas, Pernas, Ombros, Braços e Core, com filtros dinâmicos por grupamento muscular e equipamento (Barra, Halteres, Polia, Máquina, Peso Corporal), guia biomecânico completo em 3 etapas (Setup & Posicionamento, Execução Controlada e Dica de Ouro), histórico individual de sessões, gráfico de evolução de 1RM por exercício e suporte a exercícios autorais customizados.
 
 ### 2. 🔥 Execução Ativa & Cronômetro Inteligente
 - Modo **Treino Ativo** com checklist tátil de séries concluídas.

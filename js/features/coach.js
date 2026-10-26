@@ -31,6 +31,16 @@ function calcReadiness(){
   });
 
   const logs = (state && state.logs) ? state.logs : [];
+  if(logs.length === 0){
+    return {
+      score: 100,
+      statusLabel: 'Totalmente Recuperado (100%)',
+      statusColor: 'var(--ok)',
+      advice: 'Nenhum treino anterior registrado ainda. Realize sua primeira sessão para o Coach monitorar a recuperação neuromuscular real de cada músculo!',
+      muscleRecovery: muscleRecovery,
+      hoursSince: hoursSince
+    };
+  }
   if(logs.length > 0){
     // Analisa os últimos treinos
     logs.slice().sort(function(a,b){ return b.date - a.date; }).forEach(function(l){

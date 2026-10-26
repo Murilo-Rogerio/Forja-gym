@@ -5,6 +5,15 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Python cache & ferramentas
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Agent artifacts
+.agents/
+skills-lock.json
+
 # Node / dependências (se aplicável)
 node_modules/
 dist/

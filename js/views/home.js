@@ -84,6 +84,14 @@ RENDER.home = function(){
     '<button class="chip ripple tap" data-act="habit-water-reset" style="padding:4px 8px" aria-label="Zerar">' + icon('trash') + '</button>' +
     '</div></div>' +
 
+    // Peso Corporal Rápido
+    '<div class="mt14" style="padding-top:10px;border-top:1px solid var(--line)">' +
+    '<div class="rowline">' +
+    '<span style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600">' + icon('trend') + ' Peso Corporal</span>' +
+    '<button class="chip ripple tap" data-act="weight-log-modal" style="font-weight:700;color:var(--acc);font-size:12px">' +
+    (u.weight ? fmtN(u.weight) + ' kg' : '+ Registrar Peso') + '</button>' +
+    '</div></div>' +
+
     // Creatina & Sono
     '<div class="split2 mt14" style="gap:10px">' +
     '<button class="card ripple tap ' + (habits.creatine ? 'acc' : '') + '" data-act="habit-creatine" style="margin:0;padding:10px 12px;display:flex;align-items:center;gap:10px;text-align:left;border-color:' + (habits.creatine ? 'var(--ok)' : 'var(--line)') + '">' +
@@ -134,7 +142,7 @@ RENDER.home = function(){
     '<div style="width:54px;height:54px;border-radius:16px;border:1px solid rgba(56,189,248,.35);background:var(--acc-deep);color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:20px;letter-spacing:1px">' + esc(initialsOf(u.name)) + '</div></div>' +
 
     '<div class="mt28 rise" style="--d:90ms"><div class="hero-num" id="hero-vol">' + fmtKg(0) + '</div>' +
-    '<div class="lbl mt8" style="display:flex;align-items:center;gap:8px">' + icon('dumbbell') + ' Volume esta semana</div></div>' +
+    '<div class="lbl mt8" style="display:flex;align-items:center;gap:8px">' + icon('dumbbell') + ' Volume Levantado Esta Semana</div></div>' +
     '<div class="statband rise" style="--d:90ms"><div><b class="num">' + wk.count + '</b><span>Treinos/sem</span></div>' +
     '<div><b class="num">' + streak + '</b><span>Semanas seguidas</span></div>' +
     '<div><b class="num">' + prCount() + '</b><span>PRs totais</span></div></div>' +

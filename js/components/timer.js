@@ -17,7 +17,8 @@ const Timer = {
     const presets = [60,90,120].map(function(s){
       return '<button class="btn btn-ghost ripple num" data-act="rest-preset" data-arg="'+s+'">'+s+'s</button>';
     }).join('');
-    document.getElementById('restfull').innerHTML = '<div class="lbl" style="letter-spacing:3px">DESCANSO</div>' +
+    document.getElementById('restfull').innerHTML = '<div style="position:absolute;top:20px;right:20px"><button class="iconbtn ripple" data-act="rest-close" style="width:36px;height:36px;border:none;color:var(--dim)">' + icon('down') + '</button></div>' +
+      '<div class="lbl" style="letter-spacing:3px">DESCANSO ATIVO</div>' +
       '<div class="tnum num mt14" id="rf-num">--</div>' +
       '<div class="tbar"><i id="rf-bar" style="width:100%"></i></div>' +
       '<div class="stack" style="width:100%;max-width:320px"><div class="split3">'+presets+'</div>' +
@@ -29,9 +30,15 @@ const Timer = {
   showPill:function(){
     const p = document.getElementById('restpill');
     if(!document.getElementById('rp-num')){
-      p.innerHTML = icon('clock') + '<div style="flex:1"><div class="lbl" style="letter-spacing:1.5px">Descanso</div>' +
-        '<div class="tbar"><i id="rp-bar" style="width:100%"></i></div></div>' +
-        '<div class="tnum num" id="rp-num">--</div>';
+      p.innerHTML = '<div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" data-act="rest-full">' +
+        icon('clock') +
+        '<div style="flex:1"><div class="lbl" style="letter-spacing:1.5px">Descanso</div>' +
+        '<div class="tbar" style="margin:4px 0 0"><i id="rp-bar" style="width:100%"></i></div></div>' +
+        '<div class="tnum num" id="rp-num" style="font-size:22px">--</div></div>' +
+        '<div style="display:flex;gap:6px;align-items:center;margin-left:8px">' +
+        '<button class="chip ripple tap" data-act="rest-add" data-arg="30" style="padding:4px 8px;font-size:11px;font-weight:700">+30s</button>' +
+        '<button class="iconbtn ripple" data-act="rest-skip" style="width:28px;height:28px;border:none;color:var(--dim)" title="Encerrar descanso">' + icon('x') + '</button>' +
+        '</div>';
     }
     p.classList.add('on'); this.paint();
   },

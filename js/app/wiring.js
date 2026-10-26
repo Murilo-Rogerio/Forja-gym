@@ -37,6 +37,58 @@ const ACTIONS = {
         }
       });
   },
+    'w-repeat': function(d){ repeatPastWorkout(d.arg); },
+  'w-save-as-routine': function(d){ saveLogAsRoutine(d.arg); },
+  'ac-ex-move': function(d){
+    const parts = d.arg.split(':');
+    moveActiveEx(+parts[0], parts[1]);
+  },
+  'ac-ex-note': function(d){ promptActiveExNote(+d.arg); },
+  'ac-ex-note-save': function(d){
+    const el = document.getElementById('ac-note-inp');
+    if(active && active.ex[+d.arg]){
+      active.ex[+d.arg].notes = el ? el.value.trim() : '';
+      state.active = active;
+      save();
+      closeModal();
+      if(activeScreenEl) renderActiveInto(activeScreenEl);
+      toast('Anotação salva.', 'ok');
+    }
+  },
+  'weight-log-modal': function(){ openWeightLogModal(); },
+  'weight-log-save': function(){ saveWeightLogFromModal(); },
+  'weight-log-del': function(d){ deleteWeightLog(d.arg); },
+  'lib-quick-start': function(d){
+    closeModal();
+    if(active){
+      toast('Você já tem um treino em andamento.', 'bad');
+      openActiveScreen();
+      return;
+    }
+    const lib = libById(d.arg);
+    const dateStr = new Date().toLocaleDateString('pt-BR', { weekday:'short', day:'numeric', month:'short' });
+    active = {
+      workoutId: null,
+      name: 'Treino Livre (' + (lib ? lib.name : dateStr) + ')',
+      startedAt: Date.now(),
+      origBaseline: JSON.parse(JSON.stringify(state.records || {})),
+      baseline: JSON.parse(JSON.stringify(state.records || {})),
+      ex: [{
+        exId: d.arg,
+        notes: '',
+        rest: 90,
+        sets: [
+          { type:'work', reps: 10, w: '', r: '', done: false },
+          { type:'work', reps: 10, w: '', r: '', done: false },
+          { type:'work', reps: 10, w: '', r: '', done: false }
+        ]
+      }]
+    };
+    state.active = active;
+    save();
+    openActiveScreen();
+    toast('Treino iniciado com "' + (lib?lib.name:'') + '"!', 'ok', 'flame');
+  },
   'w-start': function(d){ startSession(d.arg); },
   'w-quick': function(){ startQuickSession(); },
   'w-dup': function(d){
@@ -139,20 +191,24 @@ const ACTIONS = {
   'lib-filter': function(d){
     libFilter = d.arg;
     const c = document.getElementById('lib-chips'); if(c) c.innerHTML = libChipsHTML();
+    const ce = document.getElementById('lib-equip-chips'); if(ce) ce.innerHTML = libEquipChipsHTML();
+    renderLibList();
+  },
+  'lib-equip-filter': function(d){
+    libEquipFilter = d.arg;
+    const ce = document.getElementById('lib-equip-chips'); if(ce) ce.innerHTML = libEquipChipsHTML();
     renderLibList();
   },
   'lib-add': function(d){
     if(window.libAddContext === 'active' && active){
-      const last = historyOf(d.arg).slice(-1)[0];
-      const targetReps = 10;
-      const initialWeight = last ? last.w : '';
       active.ex.push({
         exId: d.arg,
+        notes: '',
         rest: 90,
         sets: [
-          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false },
-          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false },
-          { type:'work', reps: targetReps, w: initialWeight, r: targetReps, done: false }
+          { type:'work', reps: 10, w: '', r: '', done: false },
+          { type:'work', reps: 10, w: '', r: '', done: false },
+          { type:'work', reps: 10, w: '', r: '', done: false }
         ]
       });
       state.active = active;
@@ -239,13 +295,19 @@ const ACTIONS = {
     const parts = d.arg.split(':'), f = parts[0], i = +parts[1], j = +parts[2], delta = +parts[3];
     const ex = active.ex[i]; if(!ex) return;
     const s = ex.sets[j]; if(!s) return;
+    const prevSets = lastSessionSetsOf(ex.exId);
+    const prev = prevSets ? (prevSets[j] || prevSets[prevSets.length - 1]) : null;
+
     if(f === 'w'){
-      const curW = parseNum(s.w);
-      const nextW = Math.max(0, +(curW + delta * 2.5).toFixed(1));
-      s.w = nextW > 0 ? nextW : (s.w === '' && delta < 0 ? '' : 0);
+      let baseW = parseNum(s.w);
+      if(s.w === '' && prev && prev.w > 0) baseW = prev.w;
+      const nextW = Math.max(0, +(baseW + delta * 2.5).toFixed(1));
+      s.w = nextW > 0 ? nextW : 0;
     } else {
-      const curR = parseNum(s.r) || 10;
-      s.r = Math.max(1, curR + delta);
+      let baseR = parseNum(s.r);
+      if(!baseR && prev && prev.r) baseR = prev.r;
+      if(!baseR) baseR = (ex.sets[0] && ex.sets[0].r ? ex.sets[0].r : 10);
+      s.r = Math.max(1, baseR + delta);
     }
     state.active = active; save();
     renderActiveInto(activeScreenEl);
@@ -277,6 +339,8 @@ const ACTIONS = {
   },
   'ac-minimize': function(){ minimizeActive(); },
   'ac-restore': function(){ openActiveScreen(); },
+  'ac-ex-info': function(d){ openExerciseDetail(d.arg); },
+  'rest-full': function(){ Timer.openFull(); },
 
   'rest-preset': function(d){ Timer.start(+d.arg); },
   'rest-add': function(){ Timer.add(30); },

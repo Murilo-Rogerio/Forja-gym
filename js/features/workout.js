@@ -20,16 +20,16 @@ function startSession(workoutId){
     origBaseline: JSON.parse(JSON.stringify(state.records || {})),
     baseline: JSON.parse(JSON.stringify(state.records || {})),
     ex: w.ex.map(function(x){
-      const last = historyOf(x.exId).slice(-1)[0];
       return {
         exId: x.exId,
+        notes: x.notes || '',
         rest: x.rest || 90,
         sets: x.sets.map(function(t){
           return {
             type: t.type || 'work',
             rpe: x.rpe || 8,
-            w: last ? last.w : '',
-            r: last ? last.r : (t.reps || 10),
+            w: '',
+            r: '',
             done: false
           };
         })
@@ -149,7 +149,7 @@ function renderActiveInto(el){
         const prevR = prev && prev.r ? prev.r : (s.r || 10);
         const prevTxt = prev ? (prev.w > 0 ? fmtN(prev.w) + 'kg × ' + prev.r : prev.r + ' reps') : '—';
 
-        return '<div class="setrow">' +
+        return '<div class="setrow ' + (s.done ? 'done' : '') + '">' +
           '<span class="setno">S' + (j+1) + '</span>' +
           '<button class="stbtn ' + m.cls + ' ripple" data-act="ac-set-type" data-arg="' + i + ':' + j + '" title="' + m.full + '">' + m.l + '</button>' +
           '<div class="setprev" title="Carga e repetições do treino anterior">' +
@@ -173,14 +173,20 @@ function renderActiveInto(el){
           '</div>';
       }).join('');
 
+      const upBtn = i > 0 ? '<button class="iconbtn ripple" style="width:30px;height:30px;border:none" data-act="ac-ex-move" data-arg="' + i + ':up" title="Mover para cima">' + icon('up') + '</button>' : '';
+      const downBtn = i < active.ex.length - 1 ? '<button class="iconbtn ripple" style="width:30px;height:30px;border:none" data-act="ac-ex-move" data-arg="' + i + ':down" title="Mover para baixo">' + icon('down') + '</button>' : '';
+      const noteBtn = '<button class="iconbtn ripple" style="width:30px;height:30px;border:none;color:' + (ex.notes ? 'var(--acc)' : 'var(--dim)') + '" data-act="ac-ex-note" data-arg="' + i + '" title="Anotação">' + icon('pencil') + '</button>';
+
       return '<div class="excard ' + (allDone ? 'acc' : '') + '" id="exc-' + i + '">' +
         '<div class="rowline"><div style="flex:1;min-width:0">' +
-        '<b style="font-size:16px">' + esc(lib.name) + '</b>' +
-        '<div class="mut mt8" style="font-size:12px">' + ex.sets.length + ' séries · @RPE ' + (ex.sets[0] ? ex.sets[0].rpe : 8) + lastTxt + '</div></div>' +
-        '<div style="display:flex;align-items:center;gap:6px">' +
-        '<button class="chip ripple num" data-act="ac-rest" data-arg="' + i + '">' + icon('clock') + ' ' + ex.rest + 's</button>' +
-        '<button class="iconbtn ripple" style="width:32px;height:32px;color:var(--bad);border:none" data-act="ac-ex-del" data-arg="' + i + '" aria-label="Remover exercício" title="Remover exercício">' + icon('trash') + '</button>' +
+        '<b style="font-size:16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px" data-act="ac-ex-info" data-arg="' + ex.exId + '" title="Ver histórico e instruções">' + esc(lib.name) + ' <span style="color:var(--dim);font-size:12px">' + icon('info') + '</span></b>' +
+        '<div class="mut mt4" style="font-size:12px">' + ex.sets.length + ' séries · @RPE ' + (ex.sets[0] ? ex.sets[0].rpe : 8) + lastTxt + '</div></div>' +
+        '<div style="display:flex;align-items:center;gap:3px">' +
+        upBtn + downBtn + noteBtn +
+        '<button class="chip ripple num" style="font-size:11px;padding:4px 8px" data-act="ac-rest" data-arg="' + i + '">' + icon('clock') + ' ' + ex.rest + 's</button>' +
+        '<button class="iconbtn ripple" style="width:30px;height:30px;color:var(--bad);border:none" data-act="ac-ex-del" data-arg="' + i + '" aria-label="Remover" title="Remover">' + icon('trash') + '</button>' +
         '</div></div>' +
+        (ex.notes ? '<div class="ex-notes-text mt8">' + icon('pencil') + ' ' + esc(ex.notes) + '</div>' : '') +
         suggHTML +
         '<div class="mt14">' + setRows + '</div>' +
         '<div class="rowline mt8" style="gap:6px">' +
@@ -228,14 +234,42 @@ function addActiveSet(i){
   ex.sets.push({
     type: lastSet ? lastSet.type : 'work',
     rpe: lastSet ? lastSet.rpe : 8,
-    w: lastSet ? lastSet.w : '',
-    r: lastSet ? lastSet.r : 10,
+    w: '',
+    r: '',
     done: false
   });
   state.active = active;
   save();
   renderActiveInto(activeScreenEl);
   toast('Série S' + ex.sets.length + ' adicionada.', 'ok');
+}
+
+function moveActiveEx(i, dir){
+  if(!active || !active.ex[i]) return;
+  const target = dir === 'up' ? i - 1 : i + 1;
+  if(target < 0 || target >= active.ex.length) return;
+  const item = active.ex.splice(i, 1)[0];
+  active.ex.splice(target, 0, item);
+  state.active = active;
+  save();
+  renderActiveInto(activeScreenEl);
+}
+
+function promptActiveExNote(i){
+  if(!active || !active.ex[i]) return;
+  const ex = active.ex[i];
+  const lib = libById(ex.exId);
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="h-display h2">NOTA DO EXERCÍCIO</div>' +
+    '<div class="lbl mt8" style="color:var(--acc)">' + esc(lib ? lib.name : 'Exercício') + '</div>' +
+    '<p class="mut mt8" style="font-size:13px">Adicione instruções de regulagem, carga ou sensação (ex: "Banco no 3º pino, pegada neutra").</p>' +
+    '<textarea class="fld mt14" id="ac-note-inp" placeholder="Escreva a anotação aqui..." style="min-height:90px">' + esc(ex.notes || '') + '</textarea>' +
+    '<div class="split2 mt14">' +
+    '<button class="btn btn-ghost ripple" data-act="modal-close">Cancelar</button>' +
+    '<button class="btn btn-pri ripple" data-act="ac-ex-note-save" data-arg="' + i + '">' + icon('check') + ' Salvar Nota</button>' +
+    '</div>'
+  );
 }
 
 function delActiveSet(i, j){
@@ -349,7 +383,7 @@ function finishSession(){
       .map(function(s){
         return { w: parseNum(s.w), r: parseNum(s.r), rpe: s.rpe || 8, type: s.type || 'work', done: true };
       });
-    return { exId: ex.exId, sets: sets };
+    return { exId: ex.exId, notes: ex.notes || '', sets: sets };
   }).filter(function(e){ return e.sets.length > 0; });
 
   for(const e of loggedEx){
@@ -468,6 +502,8 @@ function openReport(log, xpEarned, beforeLvl, prList, news){
     '<div class="stack mt24 rise" style="--d:360ms">' +
     '<button class="btn btn-pri ripple" style="width:100%;padding:15px;font-size:15px" data-act="rep-open">' +
     icon('camera') + ' Publicar no Feed com Foto</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="w-save-as-routine" data-arg="' + log.id + '">' +
+    icon('copy') + ' Salvar Treino como Nova Ficha de Rotina</button>' +
     '<div class="split2">' +
     '<button class="btn btn-ghost ripple" data-act="rep-share">' + icon('share') + ' Compartilhar</button>' +
     (state.settings.strava ? '<button class="btn btn-ghost ripple" data-act="rep-strava">' + icon('bolt2') + ' Strava</button>' : '<button class="btn btn-ghost ripple" data-act="rep-close">' + icon('check') + ' Fechar</button>') +
@@ -521,6 +557,8 @@ function openLogDetail(id){
       bodyMapHTML(l.groups) + groupsLegendHTML(l.groups) + '</div>' : '') +
     '<div class="lbl mt20">Detalhamento das Séries</div><div class="stack mt14">' + cards + '</div>' +
     '<div class="mt24 stack" style="gap:10px">' +
+    '<button class="btn btn-pri ripple" style="width:100%" data-act="w-repeat" data-arg="' + l.id + '">' + icon('play') + ' Repetir Este Treino Hoje</button>' +
+    '<button class="btn btn-ghost ripple" style="width:100%" data-act="w-save-as-routine" data-arg="' + l.id + '">' + icon('copy') + ' Salvar Este Treino como Ficha</button>' +
     '<button class="btn btn-ghost ripple" style="width:100%" data-act="log-share" data-arg="' + l.id + '">' + icon('share') + ' Compartilhar Resumo do Treino</button>' +
     '<button class="btn btn-danger ripple" style="width:100%" data-act="log-del" data-arg="' + l.id + '">' + icon('trash') + ' Excluir Este Treino do Histórico</button>' +
     '</div></div>'
@@ -686,4 +724,70 @@ function applyPlateWeightToActive(applyAll){
   save();
   closeModal();
   if(activeScreenEl) renderActiveInto(activeScreenEl);
+}
+
+function repeatPastWorkout(logId){
+  const l = state.logs.find(function(x){ return x.id === logId; });
+  if(!l) return;
+  if(active){
+    toast('Você já tem um treino em andamento.', 'bad');
+    openActiveScreen();
+    return;
+  }
+  active = {
+    workoutId: l.workoutId || null,
+    name: l.name,
+    startedAt: Date.now(),
+    origBaseline: JSON.parse(JSON.stringify(state.records || {})),
+    baseline: JSON.parse(JSON.stringify(state.records || {})),
+    ex: l.ex.map(function(e){
+      return {
+        exId: e.exId,
+        notes: e.notes || '',
+        rest: e.rest || 90,
+        sets: e.sets.map(function(s){
+          return {
+            type: s.type || 'work',
+            rpe: s.rpe || 8,
+            w: '',
+            r: '',
+            done: false
+          };
+        })
+      };
+    })
+  };
+  state.active = active;
+  save();
+  closeScreen();
+  openActiveScreen();
+  toast('Treino "' + l.name + '" iniciado!', 'ok', 'flame');
+}
+
+function saveLogAsRoutine(logId){
+  const l = state.logs.find(function(x){ return x.id === logId; }) || (postLogRef && postLogRef.id === logId ? postLogRef : null);
+  if(!l) return;
+  const newRoutine = {
+    id: uid(),
+    name: l.name.replace(/\s*\([^)]*\)/g, '').trim() || 'Nova Ficha',
+    split: 'Livre',
+    ex: l.ex.map(function(e){
+      return {
+        exId: e.exId,
+        rpe: (e.sets[0] && e.sets[0].rpe) || 8,
+        rest: e.rest || 90,
+        notes: e.notes || '',
+        sets: e.sets.map(function(s){
+          return {
+            type: s.type || 'work',
+            reps: s.r || 10
+          };
+        })
+      };
+    })
+  };
+  state.workouts.push(newRoutine);
+  save();
+  toast('Rotina "' + newRoutine.name + '" salva em Minhas Fichas!', 'ok', 'check');
+  if(RENDER.workouts) RENDER.workouts();
 }

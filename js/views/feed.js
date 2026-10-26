@@ -22,9 +22,6 @@ function postCardHTML(p, idx){
 }
 
 RENDER.feed = function(){
-  if(!state.feedSeeded && (!state.posts || !state.posts.length)){
-    seedFeedDemo();
-  }
   const myName = (state.user && state.user.name) || (session ? session.name : '');
   const merged = (remoteFeedCache || []).concat((state.posts || []).map(function(p){
     p.own = Boolean(myName && p.name === myName);
@@ -35,14 +32,13 @@ RENDER.feed = function(){
     '<div class="card mt20 rise" style="text-align:center;padding:36px 20px">' +
     '<div style="width:60px;height:60px;border-radius:18px;background:var(--acc-deep);color:var(--acc);margin:0 auto 16px;display:flex;align-items:center;justify-content:center">' +
     icon('camera') + '</div>' +
-    '<b style="font-size:18px;font-family:var(--fd);letter-spacing:.5px;text-transform:uppercase">Seu Feed Está Pronto!</b>' +
+    '<b style="font-size:18px;font-family:var(--fd);letter-spacing:.5px;text-transform:uppercase">Seu Feed & Diário Social</b>' +
     '<p class="mut mt8" style="font-size:13.5px;line-height:1.6;max-width:340px;margin:8px auto">' +
-    'Finalize um treino na academia, tire uma foto do shape ou dos pesos e compartilhe sua evolução com a comunidade.</p>' +
-    '<div class="mt14" style="display:flex;gap:8px;justify-content:center">' +
-    '<button class="btn btn-pri ripple" data-act="feed-new">' + icon('plus') + ' Publicar Treino ou Foto</button>' +
-    '<button class="btn btn-ghost ripple" data-act="feed-friends">' + icon('users') + ' Amigos</button>' +
-    '</div>' +
-    '<div class="mt14"><button class="btn btn-ghost btn-sm ripple" data-act="feed-seed">' + icon('spark') + ' Carregar Feed Demo</button></div></div>';
+    'Seu feed é 100% autêntico. Conclua seus treinos na academia, tire fotos do shape ou dos pesos e compartilhe seus recordes reais com amigos.</p>' +
+    '<div class="mt14" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
+    '<button class="btn btn-pri ripple" data-act="feed-new">' + icon('camera') + ' Publicar Treino ou Foto</button>' +
+    '<button class="btn btn-ghost ripple" data-act="feed-friends">' + icon('users') + ' Amigos & Conexões</button>' +
+    '</div></div>';
 
   document.querySelector('.view[data-view="feed"]').innerHTML =
     '<div class="rowline rise"><div><div class="eyebrow">Comunidade</div>' +

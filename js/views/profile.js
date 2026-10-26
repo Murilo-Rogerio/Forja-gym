@@ -13,7 +13,7 @@ RENDER.profile = function(){
     '<div class="card mt8 rise" style="--d:130ms">' +
     '<div class="kv"><span class="mut">Sessão</span><b style="font-size:13.5px">' + esc(accName) + '</b></div>' +
     '<div class="kv"><span class="mut">Tipo</span><b style="font-size:13.5px">' + esc(accMode) + '</b></div>' +
-    '<div class="kv"><span class="mut">Supabase Cloud</span><b style="font-size:13.5px;color:var(--ok)">Conectado (janbrprcrbjseutnxiko)</b></div>' +
+    '<div class="kv"><span class="mut">Sincronização Nuvem</span><b style="font-size:13.5px;color:' + (session && session.mode === 'supabase' ? 'var(--ok)' : 'var(--dim)') + '">' + (session && session.mode === 'supabase' ? 'Supabase Conectado' : 'Modo Local-First (Offline)') + '</b></div>' +
     '<div class="kv"><span class="mut">Gemini IA</span><b style="font-size:13.5px;color:' + (state.settings.gemini?'var(--ok)':'var(--dim)') + '">' + (state.settings.gemini?'conectado':'não configurado') + '</b></div>' +
     '<div class="kv"><span class="mut">Strava</span><b style="font-size:13.5px;color:' + (state.settings.strava?'var(--ok)':'var(--dim)') + '">' + (state.settings.strava?'conectado':'não configurado') + '</b></div>' +
     '<div class="stack mt14">' +
@@ -25,11 +25,20 @@ RENDER.profile = function(){
     (session ? '<button class="btn btn-danger ripple" style="width:100%" data-act="logout">' + icon('logout') + ' Sair da conta</button>' : '') +
     '</div></div>' +
     '<div class="card mt14 rise" style="--d:160ms">' +
-    '<div class="kv"><span class="mut">Peso corporal</span><b class="num">' + (u.weight?fmtN(u.weight)+' kg':'—') + '</b></div>' +
+    '<div class="rowline"><div class="lbl">Rastreador de Peso Corporal</div>' +
+    '<button class="btn btn-pri btn-sm ripple" data-act="weight-log-modal">' + icon('plus') + ' Registrar Peso</button></div>' +
+    '<div class="statband mt14"><div><b class="num">' + (u.weight ? fmtN(u.weight) + ' kg' : '—') + '</b><span>Peso Atual</span></div>' +
+    '<div><b class="num">' + (state.weightLogs && state.weightLogs.length ? fmtN(state.weightLogs[0].weight) + ' kg' : '—') + '</b><span>Peso Inicial</span></div>' +
+    '<div><b class="num" style="color:' + (weightChangeDiff() > 0 ? 'var(--warn)' : weightChangeDiff() < 0 ? 'var(--ok)' : 'var(--txt)') + '">' + (weightChangeDiff() !== 0 ? (weightChangeDiff() > 0 ? '+' : '') + fmtN(weightChangeDiff()) + ' kg' : '0.0 kg') + '</b><span>Variação</span></div></div>' +
+    ((state.weightLogs && state.weightLogs.length >= 2) ? '<div class="chartwrap mt14"><canvas class="chart" id="weight-chart-cv" data-h="130"></canvas></div>' : '') +
+    '<div class="mt14">' + weightLogRowsHTML() + '</div>' +
+    '</div>' +
+
+    '<div class="card mt14 rise" style="--d:170ms">' +
     '<div class="kv"><span class="mut">Altura</span><b class="num">' + (u.height?fmtN(u.height)+' cm':'—') + '</b></div>' +
     '<div class="kv"><span class="mut">Objetivo</span><b>' + goalLabel(u.goal) + '</b></div>' +
     '<div class="kv"><span class="mut">Nível de atividade</span><b>' + activityLabel(u.activity) + '</b></div>' +
-    '<button class="btn btn-ghost ripple mt14" style="width:100%" data-act="prof-edit">' + icon('pencil') + ' Editar perfil</button></div>' +
+    '<button class="btn btn-ghost ripple mt14" style="width:100%" data-act="prof-edit">' + icon('pencil') + ' Editar Dados Básicos</button></div>' +
     '<div class="lbl mt20 rise" style="--d:190ms">Preferências</div><div class="card mt8 rise" style="--d:200ms">' +
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('volume') + ' Som de descanso</span>' +
     '<button class="chip ripple ' + (state.settings.sound?'on':'') + '" data-act="set-sound">' + (state.settings.sound?'Ligado':'Desligado') + '</button></div>' +
@@ -52,7 +61,86 @@ RENDER.profile = function(){
     '<p class="dim mt14" style="text-align:center;font-family:var(--fd);letter-spacing:2px;font-size:12px">FORJA · TREINO & PERFORMANCE</p>';
   const btn = document.getElementById('install-btn');
   if(btn && !deferredPrompt && !isIOS) btn.style.display = 'none';
+
+  if(state.weightLogs && state.weightLogs.length >= 2){
+    requestAnimationFrame(function(){
+      const cv = document.getElementById('weight-chart-cv');
+      if(cv){
+        const pts = state.weightLogs.slice().sort(function(a,b){ return a.date - b.date; }).map(function(l){
+          return {
+            l: new Date(l.date).toLocaleDateString('pt-BR', {day:'numeric',month:'short'}).replace('.',''),
+            v: l.weight
+          };
+        });
+        drawLineChart(cv, pts);
+      }
+    });
+  }
 };
+
+function weightChangeDiff(){
+  const logs = (state.weightLogs || []).slice().sort(function(a,b){ return a.date - b.date; });
+  if(logs.length < 2) return 0;
+  return +(logs[logs.length-1].weight - logs[0].weight).toFixed(1);
+}
+
+function weightLogRowsHTML(){
+  const logs = (state.weightLogs || []).slice().sort(function(a,b){ return b.date - a.date; }).slice(0, 5);
+  if(!logs.length) return '<p class="dim text-center" style="font-size:12px;margin:8px 0">Nenhuma pesagem gravada ainda. Toque em "Registrar Peso".</p>';
+  return logs.map(function(l){
+    return '<div class="rowline" style="padding:7px 0;border-bottom:1px solid var(--line);font-size:13px">' +
+      '<div><b>' + fmtN(l.weight) + ' kg</b>' + (l.note ? ' <span class="dim" style="font-size:11.5px">(' + esc(l.note) + ')</span>' : '') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px"><span class="dim" style="font-size:11.5px">' + fmtDate(l.date) + '</span>' +
+      '<button class="iconbtn ripple" style="width:24px;height:24px;border:none;color:var(--dim)" data-act="weight-log-del" data-arg="' + l.id + '" title="Excluir">' + icon('x') + '</button></div>' +
+      '</div>';
+  }).join('');
+}
+
+function openWeightLogModal(){
+  const curW = state.user.weight || '';
+  modalHTML(
+    '<div class="sheet-grip"></div>' +
+    '<div class="rowline"><div class="h-display h2">REGISTRAR PESO CORPORAL</div>' +
+    '<div style="color:var(--acc)">' + icon('trend') + '</div></div>' +
+    '<p class="mut mt8" style="font-size:13px;line-height:1.5">Acompanhe sua evolução de peso real sem estimativas hipotéticas. Use para avaliar hipertrofia ou queima de gordura.</p>' +
+    '<label class="flabel lbl mt14">Peso Atual (kg) *</label>' +
+    '<input class="fld num mt8" id="wl-weight" type="number" inputmode="decimal" step="0.1" min="30" max="300" placeholder="Ex: 75.5" value="' + curW + '" style="font-size:22px;font-weight:700">' +
+    '<label class="flabel lbl mt14">Observação / Condição (Opcional)</label>' +
+    '<input class="fld mt8" id="wl-note" placeholder="Ex: Em jejum ao acordar, pós-treino..." maxlength="40">' +
+    '<div class="split2 mt20">' +
+    '<button class="btn btn-ghost ripple" data-act="modal-close">Cancelar</button>' +
+    '<button class="btn btn-pri ripple" data-act="weight-log-save">' + icon('check') + ' Salvar Pesagem</button>' +
+    '</div>'
+  );
+  setTimeout(function(){
+    const el = document.getElementById('wl-weight');
+    if(el){ el.focus(); el.select(); }
+  }, 120);
+}
+
+function saveWeightLogFromModal(){
+  const el = document.getElementById('wl-weight');
+  const noteEl = document.getElementById('wl-note');
+  const w = el ? parseNum(el.value) : 0;
+  if(w <= 0){
+    toast('Digite um peso válido.', 'bad');
+    return;
+  }
+  const note = noteEl ? noteEl.value.trim() : '';
+  logBodyWeight(w, note);
+  closeModal();
+  toast('Pesagem de ' + fmtN(w) + ' kg gravada com sucesso!', 'ok', 'check');
+  if(RENDER[curView]) RENDER[curView]();
+}
+
+function deleteWeightLog(id){
+  state.weightLogs = (state.weightLogs || []).filter(function(x){ return x.id !== id; });
+  const last = (state.weightLogs || []).slice().sort(function(a,b){ return a.date - b.date; }).slice(-1)[0];
+  if(last) state.user.weight = last.weight;
+  save();
+  toast('Registro de peso removido.', 'ok');
+  if(RENDER[curView]) RENDER[curView]();
+}
 
 function openProfileEditor(){
   const u = state.user;
