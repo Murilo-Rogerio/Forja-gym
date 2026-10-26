@@ -403,6 +403,14 @@ const ACTIONS = {
 
   'prof-edit': function(){ openProfileEditor(); },
   'prof-save': function(){ saveProfileFromModal(); },
+  'set-theme': function(d){
+    const t = d.arg || 'volt';
+    state.settings.theme = t;
+    save();
+    applyTheme(t);
+    RENDER.profile();
+    toast('Tema visual atualizado!', 'ok');
+  },
   'set-sound': function(){ state.settings.sound = !state.settings.sound; save(); RENDER.profile(); },
   'set-vib': function(){ state.settings.vibrate = !state.settings.vibrate; save(); RENDER.profile(); },
   'gem-set': function(){ openGemSettings(); },

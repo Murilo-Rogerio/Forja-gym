@@ -156,9 +156,13 @@ function createStarterWorkouts(){
 }
 
 function setTabbarIcons(){
+  const tabbar = document.getElementById('tabbar');
+  if(tabbar) tabbar.setAttribute('role', 'tablist');
   const icons = { home:'home', workouts:'dumbbell', feed:'users', progress:'trend', nutrition:'apple', profile:'user' };
   const labels = { home:'Início', workouts:'Treinos', feed:'Feed', progress:'Progresso', nutrition:'Nutrição', profile:'Perfil' };
   document.querySelectorAll('.tab').forEach(function(t){
+    t.setAttribute('role', 'tab');
+    t.setAttribute('aria-selected', t.classList.contains('on') ? 'true' : 'false');
     t.innerHTML = icon(icons[t.dataset.arg]) + '<span>' + labels[t.dataset.arg] + '</span>';
   });
 }
@@ -226,6 +230,7 @@ window.addEventListener('beforeunload', function(){ if(active){ state.active = a
   session = getSession();
   if(session){
     load();
+    if(typeof applyTheme === 'function') applyTheme();
     setTabbarIcons();
     go('home');
     if(!state.user.name) openOnboarding();
@@ -248,6 +253,7 @@ window.addEventListener('beforeunload', function(){ if(active){ state.active = a
       fbInit().then(function(){ if(FB) fbSyncBestEffort(); });
     }
   } else {
+    if(typeof applyTheme === 'function') applyTheme();
     setTabbarIcons();
     renderAuth();
   }

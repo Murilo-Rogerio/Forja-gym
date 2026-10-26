@@ -13,7 +13,7 @@ function defaultState(){
     ach: {},
     nutrition: { custom: null, meals: [], lastAnalysis: null },
     habits: { date: new Date().toISOString().slice(0,10), water: 0, waterTarget: 3500, creatine: false, sleep: 7.5 },
-    settings: { sound: true, vibrate: true, voiceCoach: true, gemini: '', strava: '', stravaAuto: false },
+    settings: { sound: true, vibrate: true, voiceCoach: true, gemini: '', strava: '', stravaAuto: false, theme: 'volt' },
     active: null,
     demo: false,
     posts: [],
@@ -142,7 +142,7 @@ function migrateState(s){
     s.habits.water = 0;
     s.habits.creatine = false;
   }
-  s.settings = Object.assign({ sound:true, vibrate:true, voiceCoach:true, gemini:'', strava:'', stravaAuto:false }, s.settings||{});
+  s.settings = Object.assign({ sound:true, vibrate:true, voiceCoach:true, gemini:'', strava:'', stravaAuto:false, theme:'volt' }, s.settings||{});
   s.nutrition = s.nutrition || { custom:null, meals:[], lastAnalysis:null };
   if(!Array.isArray(s.nutrition.meals)) s.nutrition.meals = [];
   s.posts = s.posts || [];

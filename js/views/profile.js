@@ -39,7 +39,31 @@ RENDER.profile = function(){
     '<div class="kv"><span class="mut">Objetivo</span><b>' + goalLabel(u.goal) + '</b></div>' +
     '<div class="kv"><span class="mut">Nível de atividade</span><b>' + activityLabel(u.activity) + '</b></div>' +
     '<button class="btn btn-ghost ripple mt14" style="width:100%" data-act="prof-edit">' + icon('pencil') + ' Editar Dados Básicos</button></div>' +
-    '<div class="lbl mt20 rise" style="--d:190ms">Preferências</div><div class="card mt8 rise" style="--d:200ms">' +
+
+    '<div class="lbl mt20 rise" style="--d:180ms">Tema Visual do App (Estilo & Cores)</div>' +
+    '<div class="card mt8 rise" style="--d:190ms">' +
+    '<p class="mut" style="font-size:12.5px;line-height:1.45">Personalize a atmosfera visual do FORJA com paletas esportivas de alta performance:</p>' +
+    '<div class="theme-picker-grid mt10">' +
+    [
+      { id:'volt', name:'Volt Atlético', sub:'Nike / Whoop / Apple', col:'#bef264' },
+      { id:'flame', name:'Forja Brasa', sub:'Âmbar Fogo & Ferro', col:'#f97316' },
+      { id:'cyan', name:'Cyber Azure', sub:'Hevy Pro / Ciano', col:'#38bdf8' },
+      { id:'crimson', name:'Crimson Power', sub:'Rubi & Força Bruta', col:'#f43f5e' }
+    ].map(function(t){
+      const cur = (state.settings.theme || 'volt');
+      const isOn = cur === t.id;
+      return '<div class="theme-card ' + (isOn ? 'on' : '') + '" data-act="set-theme" data-arg="' + t.id + '">' +
+        '<div class="theme-dot" style="background:' + t.col + ';color:' + t.col + '"></div>' +
+        '<div style="flex:1;min-width:0">' +
+        '<b>' + t.name + '</b>' +
+        '<span>' + t.sub + '</span>' +
+        '</div>' +
+        (isOn ? '<div style="color:var(--acc);display:flex">' + icon('check') + '</div>' : '') +
+        '</div>';
+    }).join('') +
+    '</div></div>' +
+
+    '<div class="lbl mt20 rise" style="--d:200ms">Preferências</div><div class="card mt8 rise" style="--d:210ms">' +
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('volume') + ' Som de descanso</span>' +
     '<button class="chip ripple ' + (state.settings.sound?'on':'') + '" data-act="set-sound">' + (state.settings.sound?'Ligado':'Desligado') + '</button></div>' +
     '<div class="kv"><span style="display:flex;align-items:center;gap:10px">' + icon('vibrate') + ' Vibração</span>' +

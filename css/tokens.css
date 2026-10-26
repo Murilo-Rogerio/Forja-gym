@@ -1,19 +1,31 @@
+/* ==========================================================================
+   FORJA - DESIGN TOKENS & ATHLETIC THEME SYSTEM
+   Padrão visual de alta performance inspirado em Whoop, Nike Training & Hevy Pro
+   ========================================================================== */
+
 :root {
-  --bg: #070b15;
-  --surf: #0e1628;
-  --surf-glass: rgba(14, 22, 40, 0.78);
-  --surf-raised: #131d33;
-  --line: rgba(148, 163, 184, 0.12);
-  --line2: rgba(148, 163, 184, 0.22);
-  --line-acc: rgba(56, 189, 248, 0.35);
+  /* --- PALETA ATLÉTICA PADRÃO: HYPER-VOLT & OBSIDIAN CARBON --- */
+  --bg: #080a0f;
+  --bg-elevated: #0d1017;
+  --surf: #11151f;
+  --surf-glass: rgba(17, 21, 31, 0.82);
+  --surf-raised: #181d2a;
+  --surf-card: rgba(19, 24, 36, 0.76);
   
-  --acc: #38bdf8;
-  --acc-glow: rgba(56, 189, 248, 0.3);
-  --acc2: #2563eb;
-  --acc-deep: #0b2545;
-  --acc-soft: rgba(56, 189, 248, 0.1);
+  --line: rgba(148, 163, 184, 0.10);
+  --line2: rgba(148, 163, 184, 0.18);
+  --line-acc: rgba(190, 242, 100, 0.35);
   
-  --txt: #f1f5f9;
+  --acc: #bef264;
+  --acc-glow: rgba(190, 242, 100, 0.32);
+  --acc-glow-subtle: rgba(190, 242, 100, 0.08);
+  --acc-dark: #84cc16;
+  --acc2: #10b981;
+  --acc-deep: #162408;
+  --acc-soft: rgba(190, 242, 100, 0.12);
+  --acc-contrast: #070a04;
+  
+  --txt: #f8fafc;
   --mut: #94a3b8;
   --dim: #64748b;
   
@@ -21,24 +33,88 @@
   --ok-soft: rgba(16, 185, 129, 0.14);
   --warn: #f59e0b;
   --warn-soft: rgba(245, 158, 11, 0.14);
-  --bad: #ef4444;
-  --bad-soft: rgba(239, 68, 68, 0.14);
+  --bad: #f43f5e;
+  --bad-soft: rgba(244, 63, 94, 0.14);
   --hot: #f43f5e;
-  --heat: #ff2a4b;
+  --heat: #ff5722;
   
-  --st-work: #38bdf8;
+  --st-work: #bef264;
   --st-prep: #fbbf24;
   --st-warm: #94a3b8;
   --st-drop: #c084fc;
   --st-fail: #f43f5e;
   
   --fd: 'Barlow Condensed', sans-serif;
-  --fb: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --tab-h: 62px;
-  --r: 18px;
-  --r-sm: 12px;
+  --fb: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --tab-h: 64px;
+  --r: 20px;
+  --r-sm: 13px;
+  --r-xs: 9px;
   
-  --glow-acc: 0 0 24px -4px rgba(56, 189, 248, 0.35);
+  --glow-acc: 0 0 24px -4px rgba(190, 242, 100, 0.35);
   --glow-hot: 0 0 24px -4px rgba(244, 63, 94, 0.4);
-  --shadow-card: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 8px 32px -8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* TEMA: FORJA BRASA (FIRE & IRON) */
+:root[data-theme="flame"] {
+  --bg: #0a0807;
+  --bg-elevated: #12100d;
+  --surf: #181310;
+  --surf-glass: rgba(24, 19, 16, 0.84);
+  --surf-raised: #221b16;
+  --surf-card: rgba(27, 21, 17, 0.78);
+  --line-acc: rgba(249, 115, 22, 0.35);
+  --acc: #f97316;
+  --acc-glow: rgba(249, 115, 22, 0.35);
+  --acc-glow-subtle: rgba(249, 115, 22, 0.08);
+  --acc-dark: #ea580c;
+  --acc2: #e11d48;
+  --acc-deep: #2a1106;
+  --acc-soft: rgba(249, 115, 22, 0.12);
+  --acc-contrast: #0c0501;
+  --st-work: #f97316;
+  --glow-acc: 0 0 24px -4px rgba(249, 115, 22, 0.38);
+}
+
+/* TEMA: CYBER AZURE (HEVY PRO / ELECTRIC CYAN) */
+:root[data-theme="cyan"] {
+  --bg: #070a12;
+  --bg-elevated: #0c111e;
+  --surf: #101728;
+  --surf-glass: rgba(16, 23, 40, 0.84);
+  --surf-raised: #162038;
+  --surf-card: rgba(18, 26, 44, 0.78);
+  --line-acc: rgba(56, 189, 248, 0.35);
+  --acc: #38bdf8;
+  --acc-glow: rgba(56, 189, 248, 0.35);
+  --acc-glow-subtle: rgba(56, 189, 248, 0.08);
+  --acc-dark: #0284c7;
+  --acc2: #2563eb;
+  --acc-deep: #081d33;
+  --acc-soft: rgba(56, 189, 248, 0.12);
+  --acc-contrast: #030d17;
+  --st-work: #38bdf8;
+  --glow-acc: 0 0 24px -4px rgba(56, 189, 248, 0.38);
+}
+
+/* TEMA: CRIMSON POWER (RAW STRENGTH & TITANIUM) */
+:root[data-theme="crimson"] {
+  --bg: #0a0809;
+  --bg-elevated: #130d0f;
+  --surf: #1a1215;
+  --surf-glass: rgba(26, 18, 21, 0.84);
+  --surf-raised: #24181c;
+  --surf-card: rgba(30, 20, 24, 0.78);
+  --line-acc: rgba(244, 63, 94, 0.35);
+  --acc: #f43f5e;
+  --acc-glow: rgba(244, 63, 94, 0.35);
+  --acc-glow-subtle: rgba(244, 63, 94, 0.08);
+  --acc-dark: #e11d48;
+  --acc2: #9333ea;
+  --acc-deep: #280811;
+  --acc-soft: rgba(244, 63, 94, 0.12);
+  --acc-contrast: #0d0205;
+  --st-work: #f43f5e;
+  --glow-acc: 0 0 24px -4px rgba(244, 63, 94, 0.38);
 }

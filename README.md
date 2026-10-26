@@ -92,6 +92,14 @@ O **FORJA** foi desenvolvido para solucionar a falta de flexibilidade, custos pr
 - Conexão direta de token de acesso no perfil do atleta.
 - Sincronização automatizada de sessões de musculação (`WeightTraining`).
 
+### 8. 🎨 Design System & Temas Visuais Atléticos
+- **4 Paletas Visuais Especializadas:**
+  - ⚡ **Volt Atlético:** Verde neon esportivo inspirado na estética de alta performance (Nike / Whoop / Apple Fitness).
+  - 🔥 **Forja Brasa:** Âmbar escarlate incandescente refletindo a identidade visual bruta de forja e ferro fundido.
+  - 🌐 **Cyber Azure:** Azul ciano elétrico moderno inspirado no ecossistema Hevy Pro.
+  - 🩸 **Crimson Power:** Vermelho rubi escarlate projetado para foco extremo e treinos de força pesada.
+- **Tipografia & Ergonomia:** Tipografia refinada (*Plus Jakarta Sans*, *Barlow* e *Barlow Condensed*), modo escuro calibrado para telas OLED e suporte nativo a *safe-areas* no iOS e Android.
+
 ---
 
 ## 🏛️ Arquitetura & Decisões Técnicas

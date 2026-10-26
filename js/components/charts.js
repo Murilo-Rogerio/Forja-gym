@@ -1,3 +1,10 @@
+function getThemeColor(varName, fallback){
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || fallback;
+  } catch(e){
+    return fallback;
+  }
+}
 function chartCtx(cv){
   const w = cv.clientWidth || (cv.parentElement && cv.parentElement.clientWidth) || 300;
   const h = parseInt(cv.getAttribute('data-h') || '180', 10);
@@ -27,7 +34,7 @@ function drawBars(cv, items){
     items.forEach(function(it, i){
       const bh = Math.max(2,(h-padB-padT)*(it.v/max)*e);
       const x = 5 + gap*i + (gap-bw)/2, y = h-padB-bh, r = Math.min(6, bw/2);
-      ctx.fillStyle = it.hot ? '#38bdf8' : 'rgba(56,189,248,.25)';
+      const acc = getThemeColor('--acc','#bef264'); ctx.fillStyle = it.hot ? acc : getThemeColor('--acc-soft','rgba(190,242,100,.25)');
       ctx.beginPath(); ctx.moveTo(x,h-padB); ctx.lineTo(x,y+r);
       ctx.arcTo(x,y,x+r,y,r); ctx.arcTo(x+bw,y,x+bw,y+r,r);
       ctx.lineTo(x+bw,h-padB); ctx.closePath(); ctx.fill();
@@ -63,14 +70,14 @@ function drawLineChart(cv, pts){
     const vis = Math.min(Math.max(2, Math.ceil(pts.length*e)), pts.length);
     ctx.beginPath();
     for(let i=0;i<vis;i++){ if(i) ctx.lineTo(X(i),Y(pts[i].v)); else ctx.moveTo(X(i),Y(pts[i].v)); }
-    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+    const acc = getThemeColor('--acc','#bef264'); ctx.strokeStyle=acc; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
     ctx.lineTo(X(vis-1), h-padB); ctx.lineTo(X(0), h-padB); ctx.closePath();
-    ctx.fillStyle='rgba(56,189,248,.08)'; ctx.fill();
+    ctx.fillStyle=getThemeColor('--acc-glow-subtle','rgba(190,242,100,.08)'); ctx.fill();
     pts.forEach(function(pt,i){
       if(i<vis){
         ctx.beginPath(); ctx.arc(X(i),Y(pt.v),4,0,7);
-        ctx.fillStyle = i===pts.length-1 ? '#38bdf8' : '#0f172a';
-        ctx.fill(); ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle = i===pts.length-1 ? acc : '#0f172a';
+        ctx.fill(); ctx.strokeStyle=acc; ctx.lineWidth=2; ctx.stroke();
       }
     });
     const step = Math.max(1, Math.ceil(pts.length/6));
@@ -95,10 +102,10 @@ function drawSpark(cv, vals){
     ctx.beginPath(); ctx.moveTo(0, h-2);
     for(let i=0;i<Math.min(vis,vals.length);i++) ctx.lineTo(X(i), Y(vals[i]));
     ctx.lineTo(X(Math.min(vis,vals.length)-1), h-2); ctx.closePath();
-    ctx.fillStyle='rgba(56,189,248,.1)'; ctx.fill();
+    const acc = getThemeColor('--acc','#bef264'); ctx.fillStyle=getThemeColor('--acc-soft','rgba(190,242,100,.12)'); ctx.fill();
     ctx.beginPath();
     for(let i=0;i<Math.min(vis,vals.length);i++){ if(i) ctx.lineTo(X(i),Y(vals[i])); else ctx.moveTo(X(i),Y(vals[i])); }
-    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2; ctx.stroke();
+    ctx.strokeStyle=acc; ctx.lineWidth=2; ctx.stroke();
     if(p<1) requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -108,7 +115,7 @@ function drawDonut(cv, segs, top, bot){
   const ctx = c.ctx, w = c.w, h = c.h;
   const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 14, LW = 24;
   const total = segs.reduce(function(s,x){ return s+x.v; },0) || 1;
-  const cols = { p:'#38bdf8', c:'#60a5fa', f:'#fbbf24' };
+  const cols = { p: getThemeColor('--acc','#bef264'), c:'#38bdf8', f:'#fbbf24' };
   const tok = animToken(cv), t0 = performance.now(), dur = 900;
   const frame = function(now){
     if(cv._tok !== tok) return;

@@ -63,3 +63,15 @@ function resizeImage(file, maxW, q){
     img.src = url;
   });
 }
+
+function applyTheme(t){
+  try {
+    t = t || (typeof state !== 'undefined' && state && state.settings && state.settings.theme) || 'volt';
+    document.documentElement.setAttribute('data-theme', t);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if(metaTheme){
+      const map = { volt: '#080a0f', flame: '#0a0807', cyan: '#070a12', crimson: '#0a0809' };
+      metaTheme.setAttribute('content', map[t] || '#080a0f');
+    }
+  } catch(e){}
+}
