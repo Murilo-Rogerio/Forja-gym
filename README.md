@@ -105,7 +105,7 @@ O **FORJA** foi desenvolvido para solucionar a falta de flexibilidade, custos pr
 ## 🏛️ Arquitetura & Decisões Técnicas
 
 - **Abordagem Local-First + Supabase Sync:** Os dados de treinos, histórico e rotinas são mantidos primordialmente em cache local (`localStorage` / IndexedDB), garantindo latência zero e operação contínua sem internet, sincronizando na nuvem com PostgreSQL (Supabase) quando online.
-- **IA Generativa Resiliente (Google Gemini):** A camada de integração com a API Gemini (`gemini-2.5-flash` e `gemini-2.0-flash`) implementa validação estrita de respostas JSON e fallback offline estruturado para manter as funcionalidades caso a rede esteja indisponível.
+- **IA Generativa Resiliente (Google Gemini):** A camada de integração com a API Gemini (`gemini-2.0-flash`, `gemini-1.5-flash` e `gemini-1.5-pro`) implementa validação estrita de respostas JSON e fallback offline estruturado para manter as funcionalidades caso a rede esteja indisponível.
 - **Renderização Gráfica em Canvas 2D:** Construção de gráficos de evolução de carga (e1RM), distribuição de volume semanal e exportação de cards de compartilhamento social em alta resolução (1080x1350) inteiramente em Canvas nativo, dispensando dependências pesadas de bibliotecas externas.
 - **Service Worker com Cache Estratégico:** Cache estático de assets essenciais e estratégia *stale-while-revalidate* para atualizações fluidas de versão.
 
