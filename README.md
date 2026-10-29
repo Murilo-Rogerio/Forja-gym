@@ -6,7 +6,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%7C%20Auth%20%7C%20Realtime-3ECF8E?logo=supabase&style=flat-square)]()
 [![Tecnologias](https://img.shields.io/badge/Techs-Vanilla%20JS%20%7C%20Canvas%202D%20%7C%20CSS3-blue?style=flat-square)]()
 [![Deploy](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel&style=flat-square)](https://theforge-rho.vercel.app)
-[![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-violet?style=flat-square)]()
+[![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-violet?style=flat-square)](LICENSE)
 
 > Aplicação Web Progressiva (PWA) Mobile-First inspirada no **Hevy**, com **AI Coach multifuncional** (Google Gemini), contador de macros e 9 micronutrientes por linguagem natural, feed social em tempo real com **Supabase Cloud**, mapa corporal anatômico interativo em vermelho neon (*heatmap*), calculadora de anilhas, importador Hevy CSV, cronômetro inteligente de descanso e integração com Strava.
 
